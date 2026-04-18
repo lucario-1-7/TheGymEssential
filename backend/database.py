@@ -15,20 +15,25 @@ def init_db():
 
 
 def seed_db():
-    from models.models import MuscleGroup, Exercise, ExerciseMuscle
+    from models import MuscleGroup, Exercise, ExerciseMuscle
     db = SessionLocal()
 
     muscle_data = [
         {"name": "chest",       "mev": 8,  "mav": 16, "mrv": 22},
-        {"name": "back",        "mev": 10, "mav": 18, "mrv": 25},
+        {"name": "lats",        "mev": 10, "mav": 18, "mrv": 25},
+        {"name": "traps",       "mev": 8,  "mav": 16, "mrv": 22},
         {"name": "quads",       "mev": 8,  "mav": 15, "mrv": 20},
         {"name": "hamstrings",  "mev": 6,  "mav": 13, "mrv": 18},
-        {"name": "shoulders",   "mev": 8,  "mav": 18, "mrv": 26},
+        {"name": "front delt",  "mev": 6,  "mav": 12, "mrv": 18},
+        {"name": "side delt",   "mev": 8,  "mav": 16, "mrv": 26},
+        {"name": "rear delt",   "mev": 6,  "mav": 14, "mrv": 20},
         {"name": "biceps",      "mev": 8,  "mav": 16, "mrv": 26},
         {"name": "triceps",     "mev": 6,  "mav": 14, "mrv": 22},
         {"name": "glutes",      "mev": 4,  "mav": 12, "mrv": 16},
         {"name": "calves",      "mev": 8,  "mav": 16, "mrv": 20},
         {"name": "abs",         "mev": 4,  "mav": 16, "mrv": 20},
+        {"name": "adductor",    "mev": 4,  "mav": 12, "mrv": 16},
+        {"name": "abductor",    "mev": 4,  "mav": 12, "mrv": 16},
     ]
 
     muscle_objs = {}
@@ -46,7 +51,7 @@ def seed_db():
             "equipment": "barbell",
             "is_unilateral": False,
             "primary": ["chest"],
-            "secondary": ["triceps", "shoulders"],
+            "secondary": ["triceps", "front delt"],
         },
         {
             "name": "Incline dumbbell press",
@@ -54,7 +59,7 @@ def seed_db():
             "equipment": "dumbbell",
             "is_unilateral": False,
             "primary": ["chest"],
-            "secondary": ["triceps", "shoulders"],
+            "secondary": ["triceps", "front delt"],
         },
         {
             "name": "Cable fly",
@@ -78,38 +83,38 @@ def seed_db():
             "equipment": "barbell",
             "is_unilateral": False,
             "primary": ["hamstrings"],
-            "secondary": ["glutes", "back"],
+            "secondary": ["glutes", "lats", "traps"],
         },
         {
             "name": "Pull up",
             "movement_pattern": "pull",
             "equipment": "bodyweight",
             "is_unilateral": False,
-            "primary": ["back"],
-            "secondary": ["biceps"],
+            "primary": ["lats"],
+            "secondary": ["biceps", "rear delt"],
         },
         {
             "name": "Barbell row",
             "movement_pattern": "pull",
             "equipment": "barbell",
             "is_unilateral": False,
-            "primary": ["back"],
-            "secondary": ["biceps"],
+            "primary": ["lats", "traps"],
+            "secondary": ["biceps", "rear delt"],
         },
         {
             "name": "Overhead press",
             "movement_pattern": "push",
             "equipment": "barbell",
             "is_unilateral": False,
-            "primary": ["shoulders"],
-            "secondary": ["triceps"],
+            "primary": ["front delt"],
+            "secondary": ["triceps", "side delt"],
         },
         {
             "name": "Dumbbell lateral raise",
             "movement_pattern": "push",
             "equipment": "dumbbell",
             "is_unilateral": False,
-            "primary": ["shoulders"],
+            "primary": ["side delt"],
             "secondary": [],
         },
         {
@@ -200,7 +205,7 @@ def seed_db():
 
 if __name__ == "__main__":
     # Must import all models BEFORE init_db so they register with Base
-    from models.models import (
+    from models import (
         User, BodyweightLog, MuscleGroup, UserMuscleVolume,
         Exercise, ExerciseMuscle, Mesocycle, Session, SessionExercise, SetLog
     )

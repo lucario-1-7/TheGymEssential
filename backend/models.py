@@ -19,12 +19,14 @@ class User(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String, nullable=False)
+    is_admin = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     mesocycles = relationship("Mesocycle", back_populates="user")
     sessions = relationship("Session", back_populates="user")
     bodyweight_logs = relationship("BodyweightLog", back_populates="user")
     muscle_volumes = relationship("UserMuscleVolume", back_populates="user")
+    programs = relationship("Program", back_populates="user")
 
 
 class BodyweightLog(Base):
@@ -64,6 +66,46 @@ class UserMuscleVolume(Base):
     muscle_group = relationship("MuscleGroup", back_populates="user_volumes")
 
 
+class Program(Base):
+    __tablename__ = "programs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    name = Column(String, nullable=False)
+    is_active = Column(Boolean, default=False)
+
+    user = relationship("User", back_populates="programs")
+    days = relationship("ProgramDay", cascade="all, delete-orphan", back_populates="program")
+
+
+class ProgramDay(Base):
+    __tablename__ = "program_days"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    program_id = Column(UUID(as_uuid=True), ForeignKey("programs.id"), nullable=False)
+    day_of_week = Column(Integer, nullable=False)  # 0=Monday, 6=Sunday
+    is_rest = Column(Boolean, default=False)
+    label = Column(String, nullable=True)
+
+    program = relationship("Program", back_populates="days")
+    exercises = relationship("ProgramExercise", cascade="all, delete-orphan", back_populates="program_day")
+
+
+class ProgramExercise(Base):
+    __tablename__ = "program_exercises"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    program_day_id = Column(UUID(as_uuid=True), ForeignKey("program_days.id"), nullable=False)
+    exercise_id = Column(UUID(as_uuid=True), ForeignKey("exercises.id"), nullable=False)
+    order_index = Column(Integer, nullable=False)
+    target_sets = Column(Integer, nullable=True)
+    target_reps_min = Column(Integer, nullable=True)
+    target_reps_max = Column(Integer, nullable=True)
+
+    program_day = relationship("ProgramDay", back_populates="exercises")
+    exercise = relationship("Exercise")
+
+
 class Exercise(Base):
     __tablename__ = "exercises"
 
@@ -73,7 +115,7 @@ class Exercise(Base):
     equipment = Column(String, nullable=False)          # barbell, dumbbell, cable, machine, bodyweight
     is_unilateral = Column(Boolean, default=False)
 
-    muscle_targets = relationship("ExerciseMuscle", back_populates="exercise")
+    muscle_targets = relationship("ExerciseMuscle", cascade="all, delete-orphan", back_populates="exercise")
     session_exercises = relationship("SessionExercise", back_populates="exercise")
 
 
@@ -147,6 +189,6 @@ class SetLog(Base):
 
     reps = Column(Integer, nullable=False)
     rir = Column(Integer, nullable=False)
-    rest_seconds = Column(Integer, nullable=True)
+    notes = Column(Text, nullable=True)
 
     session_exercise = relationship("SessionExercise", back_populates="sets")
