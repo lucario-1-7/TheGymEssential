@@ -1,0 +1,138 @@
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { get, post } from '../api/index.js'
+import { Button } from '../components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+
+const USER_ID = 'd45ce928-b4dc-4d4a-9a7b-8e9450f7138d'
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+export default function Dashboard() {
+  const [sessions, setSessions] = useState([])
+  const [todayPlan, setTodayPlan] = useState(null)
+  const [lastWeekSession, setLastWeekSession] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    get(`/sessions/${USER_ID}`)
+      .then(async data => {
+        const allSessions = Array.isArray(data) ? data : []
+        setSessions(allSessions)
+        
+        const currentDayOfWeek = new Date().getDay()
+        const todayStr = new Date().toISOString().split('T')[0]
+        const sameDaySession = allSessions.find(s => {
+          // Parse date properly (assuming YYYY-MM-DD input, appending T12:00:00Z to avoid timezone shifts)
+          const sDate = new Date(s.date + 'T12:00:00Z')
+          return sDate.getDay() === currentDayOfWeek && s.date !== todayStr
+        })
+        
+        if (sameDaySession) {
+          try {
+            const detail = await get(`/sessions/detail/${sameDaySession.id}`)
+            setLastWeekSession(detail)
+          } catch(e) {}
+        }
+      })
+      .finally(() => setLoading(false))
+
+    get(`/programs/${USER_ID}/today`)
+      .then(data => setTodayPlan(data))
+      .catch(() => setTodayPlan(null))
+  }, [])
+
+  async function startSession() {
+    const today = new Date().toISOString().split('T')[0]
+    const session = await post(`/sessions/${USER_ID}`, { date: today })
+    navigate(`/session/${session.id}`)
+  }
+
+  const todayName = DAYS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1]
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-medium">Dashboard</h2>
+        <Button onClick={startSession}>Start session</Button>
+      </div>
+
+      {/* Today's workout plan */}
+      <Card className="bg-gray-900 border-gray-800">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Today — {todayName}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!todayPlan && (
+            <p className="text-sm text-gray-500">No active program. Set one in My Workouts.</p>
+          )}
+          {todayPlan?.is_rest && (
+            <p className="text-sm text-gray-400">Rest day. Recover well.</p>
+          )}
+          {todayPlan && !todayPlan.is_rest && (
+            <div className="space-y-2">
+              {todayPlan.label && (
+                <p className="text-sm text-gray-400 mb-3">{todayPlan.label}</p>
+              )}
+              {todayPlan.exercises.map((ex, i) => (
+                <div key={i} className="flex items-center justify-between px-3 py-2 bg-gray-800 rounded-lg">
+                  <p className="text-sm">{ex.exercise.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {ex.target_sets} sets · {ex.target_reps_min}–{ex.target_reps_max} reps
+                  </p>
+                </div>
+              ))}
+              
+              {lastWeekSession && (
+                <div className="bg-gray-800/60 rounded-lg p-3 my-4 border border-gray-700/50">
+                  <p className="text-xs text-gray-400 font-medium mb-2 uppercase tracking-wide">Last time you did this ({lastWeekSession.date})</p>
+                  <div className="space-y-1.5">
+                  {lastWeekSession.session_exercises?.map((se, idx) => {
+                    const topWeight = se.sets.length > 0 ? Math.max(...se.sets.map(s => s.weight_kg || s.weight_kg_left || 0)) : 0
+                    return (
+                      <div key={idx} className="flex items-center justify-between text-xs">
+                        <span className="text-gray-300">{se.exercise.name}</span>
+                        <span className="text-gray-500">
+                          {se.sets.length} sets {topWeight > 0 ? ` (Top: ${topWeight}kg)` : ''}
+                        </span>
+                      </div>
+                    )
+                  })}
+                  </div>
+                </div>
+              )}
+              
+              <Button className="w-full mt-2" onClick={startSession}>
+                Start today's session
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Recent sessions */}
+      <div className="space-y-2">
+        <h3 className="text-sm text-gray-400">Recent sessions</h3>
+        {loading && <p className="text-sm text-gray-500">Loading...</p>}
+        {!loading && sessions.length === 0 && (
+          <p className="text-sm text-gray-500">No sessions yet.</p>
+        )}
+        {sessions.slice(0, 10).map(s => (
+          <div
+            key={s.id}
+            onClick={() => navigate(`/session/${s.id}`)}
+            className="flex items-center justify-between px-4 py-3 bg-gray-900 border border-gray-800 rounded-lg cursor-pointer hover:border-gray-600 transition-colors"
+          >
+            <div>
+              <p className="text-sm font-medium">{s.date}</p>
+              {s.notes && <p className="text-xs text-gray-500 mt-0.5">{s.notes}</p>}
+            </div>
+            {s.session_rpe && (
+              <span className="text-xs text-gray-400">RPE {s.session_rpe}</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
