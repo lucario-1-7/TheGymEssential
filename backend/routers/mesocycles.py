@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from deps import get_db
+from deps import get_db, verify_user
 from models import Mesocycle, Session as WorkoutSession, SessionExercise, SetLog, ExerciseMuscle, UserMuscleVolume
 from schemas import MesocycleCreate, MesocycleOut, ProgramSummaryOut, MuscleSummary
 from uuid import UUID
@@ -10,7 +10,7 @@ router = APIRouter()
 
 
 @router.post("/{user_id}", response_model=MesocycleOut)
-def create_mesocycle(user_id: UUID, body: MesocycleCreate, db: Session = Depends(get_db)):
+def create_mesocycle(user_id: UUID, body: MesocycleCreate, db: Session = Depends(get_db), _user=Depends(verify_user)):
     meso = Mesocycle(
         user_id=user_id,
         goal=body.goal,
@@ -25,7 +25,7 @@ def create_mesocycle(user_id: UUID, body: MesocycleCreate, db: Session = Depends
 
 
 @router.get("/{user_id}", response_model=list[MesocycleOut])
-def list_mesocycles(user_id: UUID, db: Session = Depends(get_db)):
+def list_mesocycles(user_id: UUID, db: Session = Depends(get_db), _user=Depends(verify_user)):
     return db.query(Mesocycle).filter(
         Mesocycle.user_id == user_id
     ).order_by(Mesocycle.start_date.desc()).all()

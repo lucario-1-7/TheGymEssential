@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session as DBSession
 from datetime import date, timedelta
 from uuid import UUID
 
-from deps import get_db
+from deps import get_db, verify_user
 from models import Session, Program, ProgramDay, MissedSession
 from schemas import MissedSessionOut, MissedAnswerRequest
 
@@ -14,7 +14,7 @@ MAX_LOOKBACK_DAYS = 30
 
 
 @router.post("/{user_id}/scan", response_model=list[MissedSessionOut])
-def scan(user_id: UUID, db: DBSession = Depends(get_db)):
+def scan(user_id: UUID, db: DBSession = Depends(get_db), _user=Depends(verify_user)):
     """Detect scheduled training days (per the active program) that were skipped
     since the last logged session, and return the ones still awaiting an answer.
     """
@@ -59,7 +59,7 @@ def scan(user_id: UUID, db: DBSession = Depends(get_db)):
 
 
 @router.post("/{user_id}/answer", response_model=list[MissedSessionOut])
-def answer(user_id: UUID, body: MissedAnswerRequest, db: DBSession = Depends(get_db)):
+def answer(user_id: UUID, body: MissedAnswerRequest, db: DBSession = Depends(get_db), _user=Depends(verify_user)):
     """Record the same reason across every still-unanswered missed session."""
     pending = db.query(MissedSession).filter(
         MissedSession.user_id == user_id, MissedSession.reason.is_(None)
@@ -71,7 +71,7 @@ def answer(user_id: UUID, body: MissedAnswerRequest, db: DBSession = Depends(get
 
 
 @router.get("/{user_id}", response_model=list[MissedSessionOut])
-def list_missed(user_id: UUID, db: DBSession = Depends(get_db)):
+def list_missed(user_id: UUID, db: DBSession = Depends(get_db), _user=Depends(verify_user)):
     """All missed sessions (answered or not) — used by the History page."""
     return db.query(MissedSession).filter(
         MissedSession.user_id == user_id

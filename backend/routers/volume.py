@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import date, timedelta
 from uuid import UUID
 
-from deps import get_db
+from deps import get_db, verify_user
 from models import Session
 from schemas import VolumeOut, MuscleVolumeOut
 
@@ -16,6 +16,7 @@ def muscle_volume(
     user_id: UUID,
     period: str = Query("week", pattern="^(week|all)$"),
     db: DBSession = Depends(get_db),
+    _user=Depends(verify_user),
 ):
     """Working sets per muscle, counted only where that muscle is the exercise's
     PRIMARY target. A unilateral set logged as left+right counts once.

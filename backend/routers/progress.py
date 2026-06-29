@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session as DBSession
 from collections import OrderedDict
 from uuid import UUID
 
-from deps import get_db
+from deps import get_db, verify_user
 from models import Session, SessionExercise, Exercise
 from schemas import ExerciseProgressOut, ProgressPoint, PlateauOut, PRData
 from analytics import e1rm, best_e1rm, detect_plateau
@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 @router.get("/{user_id}/exercise/{exercise_id}", response_model=ExerciseProgressOut)
-def exercise_progress(user_id: UUID, exercise_id: UUID, db: DBSession = Depends(get_db)):
+def exercise_progress(user_id: UUID, exercise_id: UUID, db: DBSession = Depends(get_db), _user=Depends(verify_user)):
     """Per-session progression for one exercise: e1RM / top-weight / volume over
     time, the all-time PR, and a plateau verdict on the e1RM trend.
 

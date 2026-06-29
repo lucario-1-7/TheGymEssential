@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from deps import get_db
+from deps import get_db, verify_user
 from models import Program, ProgramDay, ProgramExercise
 from schemas import ProgramCreate, ProgramOut, ProgramDayOut
 from uuid import UUID
@@ -9,7 +9,7 @@ from datetime import datetime
 router = APIRouter()
 
 @router.post("/{user_id}", response_model=ProgramOut)
-def create_program(user_id: UUID, body: ProgramCreate, db: Session = Depends(get_db)):
+def create_program(user_id: UUID, body: ProgramCreate, db: Session = Depends(get_db), _user=Depends(verify_user)):
     # If this is the user's first program, make it active
     existing_programs = db.query(Program).filter(Program.user_id == user_id).count()
     is_active = existing_programs == 0
@@ -48,7 +48,7 @@ def create_program(user_id: UUID, body: ProgramCreate, db: Session = Depends(get
     return program
 
 @router.put("/{user_id}/{program_id}", response_model=ProgramOut)
-def update_program(user_id: UUID, program_id: UUID, body: ProgramCreate, db: Session = Depends(get_db)):
+def update_program(user_id: UUID, program_id: UUID, body: ProgramCreate, db: Session = Depends(get_db), _user=Depends(verify_user)):
     program = db.query(Program).filter(Program.id == program_id, Program.user_id == user_id).first()
     if not program:
         raise HTTPException(status_code=404, detail="Program not found")
@@ -86,7 +86,7 @@ def update_program(user_id: UUID, program_id: UUID, body: ProgramCreate, db: Ses
     return program
 
 @router.get("/{user_id}", response_model=list[ProgramOut])
-def list_programs(user_id: UUID, db: Session = Depends(get_db)):
+def list_programs(user_id: UUID, db: Session = Depends(get_db), _user=Depends(verify_user)):
     return db.query(Program).filter(Program.user_id == user_id).order_by(Program.name).all()
 
 @router.delete("/{program_id}")
@@ -99,7 +99,7 @@ def delete_program(program_id: UUID, db: Session = Depends(get_db)):
     return {"detail": "Deleted"}
 
 @router.patch("/{user_id}/activate/{program_id}")
-def activate_program(user_id: UUID, program_id: UUID, db: Session = Depends(get_db)):
+def activate_program(user_id: UUID, program_id: UUID, db: Session = Depends(get_db), _user=Depends(verify_user)):
     db.query(Program).filter(Program.user_id == user_id).update({"is_active": False})
     
     program = db.query(Program).filter(Program.id == program_id, Program.user_id == user_id).first()
@@ -111,7 +111,7 @@ def activate_program(user_id: UUID, program_id: UUID, db: Session = Depends(get_
     return {"detail": "Activated"}
 
 @router.get("/{user_id}/today", response_model=ProgramDayOut)
-def get_todays_plan(user_id: UUID, db: Session = Depends(get_db)):
+def get_todays_plan(user_id: UUID, db: Session = Depends(get_db), _user=Depends(verify_user)):
     # Python weekday(): Monday is 0 and Sunday is 6.
     today_day_of_week = datetime.now().weekday()
     

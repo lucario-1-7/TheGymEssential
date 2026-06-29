@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session as DBSession
-from deps import get_db
+from deps import get_db, verify_user
 from models import Session, SessionExercise, SetLog, Exercise
 from schemas import (
     SessionCreate, SessionOut, SessionDetailOut,
@@ -15,7 +15,7 @@ router = APIRouter()
 
 
 @router.post("/{user_id}", response_model=SessionOut)
-def create_session(user_id: UUID, body: SessionCreate, db: DBSession = Depends(get_db)):
+def create_session(user_id: UUID, body: SessionCreate, db: DBSession = Depends(get_db), _user=Depends(verify_user)):
     session = Session(
         user_id=user_id,
         date=body.date,
@@ -30,7 +30,7 @@ def create_session(user_id: UUID, body: SessionCreate, db: DBSession = Depends(g
 
 
 @router.get("/{user_id}", response_model=list[SessionOut])
-def list_sessions(user_id: UUID, db: DBSession = Depends(get_db)):
+def list_sessions(user_id: UUID, db: DBSession = Depends(get_db), _user=Depends(verify_user)):
     return db.query(Session).filter(
         Session.user_id == user_id
     ).order_by(Session.date.desc()).all()
@@ -41,6 +41,7 @@ def sessions_by_date(
     user_id: UUID,
     date: date_cls = Query(..., description="Calendar date, e.g. 2026-04-18"),
     db: DBSession = Depends(get_db),
+    _user=Depends(verify_user),
 ):
     """Full session detail for a given day. Empty list = no session logged that day.
 
@@ -53,7 +54,7 @@ def sessions_by_date(
 
 
 @router.get("/{user_id}/last-performance/{exercise_id}", response_model=LastPerformanceOut)
-def last_performance(user_id: UUID, exercise_id: UUID, db: DBSession = Depends(get_db)):
+def last_performance(user_id: UUID, exercise_id: UUID, db: DBSession = Depends(get_db), _user=Depends(verify_user)):
     """Most recent logged sets for an exercise — the 'beat the logbook' reference."""
     last_se = (
         db.query(SessionExercise)
@@ -207,7 +208,7 @@ def compute_suggestion(exercise: Exercise, last_sets: list[SetLog]) -> dict:
 
 
 @router.get("/{user_id}/suggestions/{exercise_id}", response_model=SuggestionOut)
-def get_suggestion(user_id: UUID, exercise_id: UUID, db: DBSession = Depends(get_db)):
+def get_suggestion(user_id: UUID, exercise_id: UUID, db: DBSession = Depends(get_db), _user=Depends(verify_user)):
     exercise = db.query(Exercise).filter(Exercise.id == exercise_id).first()
     if not exercise:
         raise HTTPException(status_code=404, detail="Exercise not found")

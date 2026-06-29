@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from deps import get_db
+from deps import get_db, verify_user
 from models import User, BodyweightLog, MuscleGroup, UserMuscleVolume
 from schemas import UserCreate, UserOut, BodyweightCreate, BodyweightOut, UserMuscleVolumeUpdate, UserMuscleVolumeOut
 from uuid import UUID
@@ -55,7 +55,7 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
     return user
 
 @router.get("/admin/all")
-def get_admin_metrics(user_id: UUID, db: Session = Depends(get_db)):
+def get_admin_metrics(user_id: UUID, db: Session = Depends(get_db), _user=Depends(verify_user)):
     admin_user = db.query(User).filter(User.id == user_id, User.is_admin == True).first()
     if not admin_user:
         raise HTTPException(status_code=403, detail="Unauthorized: Admin access required")
@@ -99,7 +99,7 @@ def create_user(body: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/{user_id}", response_model=UserOut)
-def get_user(user_id: UUID, db: Session = Depends(get_db)):
+def get_user(user_id: UUID, db: Session = Depends(get_db), _user=Depends(verify_user)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -107,7 +107,7 @@ def get_user(user_id: UUID, db: Session = Depends(get_db)):
 
 
 @router.post("/{user_id}/bodyweight", response_model=BodyweightOut)
-def log_bodyweight(user_id: UUID, body: BodyweightCreate, db: Session = Depends(get_db)):
+def log_bodyweight(user_id: UUID, body: BodyweightCreate, db: Session = Depends(get_db), _user=Depends(verify_user)):
     log = BodyweightLog(user_id=user_id, weight_kg=body.weight_kg, date=body.date)
     db.add(log)
     db.commit()
@@ -116,14 +116,14 @@ def log_bodyweight(user_id: UUID, body: BodyweightCreate, db: Session = Depends(
 
 
 @router.get("/{user_id}/bodyweight", response_model=list[BodyweightOut])
-def get_bodyweight_history(user_id: UUID, db: Session = Depends(get_db)):
+def get_bodyweight_history(user_id: UUID, db: Session = Depends(get_db), _user=Depends(verify_user)):
     return db.query(BodyweightLog).filter(
         BodyweightLog.user_id == user_id
     ).order_by(BodyweightLog.date).all()
 
 
 @router.get("/{user_id}/volume", response_model=list[UserMuscleVolumeOut])
-def get_volume_landmarks(user_id: UUID, db: Session = Depends(get_db)):
+def get_volume_landmarks(user_id: UUID, db: Session = Depends(get_db), _user=Depends(verify_user)):
     return db.query(UserMuscleVolume).filter(
         UserMuscleVolume.user_id == user_id
     ).all()
@@ -134,7 +134,8 @@ def update_volume_landmark(
     user_id: UUID,
     muscle_group_id: UUID,
     body: UserMuscleVolumeUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    _user=Depends(verify_user),
 ):
     record = db.query(UserMuscleVolume).filter(
         UserMuscleVolume.user_id == user_id,
