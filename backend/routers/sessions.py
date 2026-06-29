@@ -19,7 +19,6 @@ def create_session(user_id: UUID, body: SessionCreate, db: DBSession = Depends(g
     session = Session(
         user_id=user_id,
         date=body.date,
-        mesocycle_id=body.mesocycle_id,
         session_rpe=body.session_rpe,
         notes=body.notes,
     )

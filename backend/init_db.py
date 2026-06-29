@@ -5,9 +5,9 @@ Usage: python init_db.py
 from database import Base, engine, SessionLocal
 
 # Import ALL models so they register against Base before create_all()
-from TheGymEssential.backend.models import (
+from models import (
     User, BodyweightLog, MuscleGroup, UserMuscleVolume,
-    Exercise, ExerciseMuscle, Mesocycle, Session, SessionExercise, SetLog
+    Exercise, ExerciseMuscle, Session, SessionExercise, SetLog
 )
 
 

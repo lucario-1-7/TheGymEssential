@@ -28,7 +28,6 @@ class User(Base):
     token_version = Column(Integer, nullable=False, default=0, server_default="0")
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    mesocycles = relationship("Mesocycle", back_populates="user")
     sessions = relationship("Session", back_populates="user")
     bodyweight_logs = relationship("BodyweightLog", back_populates="user")
     muscle_volumes = relationship("UserMuscleVolume", back_populates="user")
@@ -166,33 +165,16 @@ class ExerciseMuscle(Base):
     muscle_group = relationship("MuscleGroup", back_populates="exercise_targets", lazy="selectin")
 
 
-class Mesocycle(Base):
-    __tablename__ = "mesocycles"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    goal = Column(String, nullable=False)   # hypertrophy, strength, recomp
-    total_weeks = Column(Integer, nullable=False)
-    start_date = Column(Date, nullable=False)
-    end_date = Column(Date, nullable=True)
-    is_deload = Column(Boolean, default=False)
-
-    user = relationship("User", back_populates="mesocycles")
-    sessions = relationship("Session", back_populates="mesocycle")
-
-
 class Session(Base):
     __tablename__ = "sessions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
-    mesocycle_id = Column(UUID(as_uuid=True), ForeignKey("mesocycles.id"), nullable=True)
     date = Column(Date, nullable=False)
     session_rpe = Column(Integer, nullable=True)
     notes = Column(Text, nullable=True)
 
     user = relationship("User", back_populates="sessions")
-    mesocycle = relationship("Mesocycle", back_populates="sessions")
     session_exercises = relationship(
         "SessionExercise",
         back_populates="session",

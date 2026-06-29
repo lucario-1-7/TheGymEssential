@@ -6,9 +6,6 @@ from uuid import UUID
 
 # ─── User ────────────────────────────────────────────────────────────────────
 
-class UserCreate(BaseModel):
-    name: str
-
 class UserOut(BaseModel):
     id: UUID
     name: str
@@ -114,38 +111,16 @@ class ExerciseOut(BaseModel):
         from_attributes = True
 
 
-# ─── Mesocycle ────────────────────────────────────────────────────────────────
-
-class MesocycleCreate(BaseModel):
-    goal: str
-    total_weeks: int
-    start_date: date
-    is_deload: bool = False
-
-class MesocycleOut(BaseModel):
-    id: UUID
-    goal: str
-    total_weeks: int
-    start_date: date
-    end_date: Optional[date]
-    is_deload: bool
-
-    class Config:
-        from_attributes = True
-
-
 # ─── Session ──────────────────────────────────────────────────────────────────
 
 class SessionCreate(BaseModel):
     date: date
-    mesocycle_id: Optional[UUID] = None
     session_rpe: Optional[int] = None
     notes: Optional[str] = None
 
 class SessionOut(BaseModel):
     id: UUID
     date: date
-    mesocycle_id: Optional[UUID]
     session_rpe: Optional[int]
     notes: Optional[str]
 
@@ -209,7 +184,6 @@ class SessionExerciseOut(BaseModel):
 class SessionDetailOut(BaseModel):
     id: UUID
     date: date
-    mesocycle_id: Optional[UUID]
     session_rpe: Optional[int]
     notes: Optional[str]
     session_exercises: list[SessionExerciseOut]
@@ -301,24 +275,6 @@ class MissedSessionOut(BaseModel):
 
 class MissedAnswerRequest(BaseModel):
     reason: str
-
-
-# ─── Program Summary ──────────────────────────────────────────────────────────
-
-class MuscleSummary(BaseModel):
-    muscle: str
-    sets_per_week: float
-    frequency_per_week: float
-    mev_sets: int
-    mav_sets: int
-    mrv_sets: int
-    status: str
-
-class ProgramSummaryOut(BaseModel):
-    mesocycle_id: UUID
-    total_sessions: int
-    weeks: int
-    muscle_summary: list[MuscleSummary]
 
 
 # ─── Program ──────────────────────────────────────────────────────────────────

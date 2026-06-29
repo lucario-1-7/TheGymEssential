@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+import time
+from collections import defaultdict
+
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -9,6 +12,21 @@ from security import hash_password, verify_password, create_access_token
 from routers.users import DEFAULT_VOLUMES
 
 router = APIRouter()
+
+# In-memory login throttle: recent failed-attempt timestamps per client IP.
+# Good enough for a single-process personal app; back it with Redis if this ever
+# runs across multiple workers.
+_LOGIN_FAILURES: dict[str, list[float]] = defaultdict(list)
+LOGIN_MAX_FAILURES = 5
+LOGIN_WINDOW_SECONDS = 300  # 5 minutes
+
+
+def _check_login_rate(ip: str):
+    now = time.monotonic()
+    recent = [t for t in _LOGIN_FAILURES[ip] if now - t < LOGIN_WINDOW_SECONDS]
+    _LOGIN_FAILURES[ip] = recent
+    if len(recent) >= LOGIN_MAX_FAILURES:
+        raise HTTPException(status_code=429, detail="Too many login attempts. Try again in a few minutes.")
 
 
 def _seed_volume_landmarks(user: User, db: Session):
@@ -38,11 +56,15 @@ def register(body: RegisterRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenOut)
-def login(body: AuthLoginRequest, db: Session = Depends(get_db)):
+def login(body: AuthLoginRequest, request: Request, db: Session = Depends(get_db)):
+    ip = request.client.host if request.client else "unknown"
+    _check_login_rate(ip)
     username = body.username.strip().lower()
     user = db.query(User).filter(func.lower(User.username) == username).first()
     if not user or not user.password_hash or not verify_password(body.password, user.password_hash):
+        _LOGIN_FAILURES[ip].append(time.monotonic())
         raise HTTPException(status_code=401, detail="Incorrect username or password")
+    _LOGIN_FAILURES.pop(ip, None)  # clear on success
     return TokenOut(access_token=create_access_token(user.id, user.token_version), user=UserOut.model_validate(user))
 
 

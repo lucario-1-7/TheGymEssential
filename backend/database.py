@@ -207,7 +207,7 @@ if __name__ == "__main__":
     # Must import all models BEFORE init_db so they register with Base
     from models import (
         User, BodyweightLog, MuscleGroup, UserMuscleVolume,
-        Exercise, ExerciseMuscle, Mesocycle, Session, SessionExercise, SetLog
+        Exercise, ExerciseMuscle, Session, SessionExercise, SetLog
     )
     init_db()
     seed_db()
