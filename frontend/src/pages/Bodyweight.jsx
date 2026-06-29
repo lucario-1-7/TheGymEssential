@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
 import { get, post } from '../api/index.js'
+import { useUserId } from '../auth/AuthContext'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Input } from '../components/ui/input'
 import { Button } from '../components/ui/button'
 import TrendChart from '../components/TrendChart'
-
-const USER_ID = 'd45ce928-b4dc-4d4a-9a7b-8e9450f7138d'
 
 // Local calendar date as YYYY-MM-DD. Using en-CA (not toISOString, which converts
 // to UTC and can roll the date forward/back across midnight).
@@ -14,6 +13,7 @@ function todayLocal() {
 }
 
 export default function Bodyweight() {
+  const USER_ID = useUserId()
   const [logs, setLogs] = useState([])
   const [weight, setWeight] = useState('')
   const [date, setDate] = useState(todayLocal())

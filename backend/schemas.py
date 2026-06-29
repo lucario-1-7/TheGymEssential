@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, Literal
 from datetime import date, datetime
 from uuid import UUID
@@ -12,11 +12,28 @@ class UserCreate(BaseModel):
 class UserOut(BaseModel):
     id: UUID
     name: str
+    username: Optional[str] = None
     is_admin: bool
     created_at: datetime
 
     class Config:
         from_attributes = True
+
+
+# ─── Auth ─────────────────────────────────────────────────────────────────────
+
+class RegisterRequest(BaseModel):
+    username: str = Field(min_length=3)
+    password: str = Field(min_length=6)
+
+class AuthLoginRequest(BaseModel):
+    username: str
+    password: str
+
+class TokenOut(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserOut
 
 
 # ─── Bodyweight ───────────────────────────────────────────────────────────────
@@ -216,6 +233,10 @@ class LastPerformanceOut(BaseModel):
     sets: list[SetOut]
     best_e1rm: Optional[float]
 
+class DoubleProgressionOut(BaseModel):
+    level: str        # "add" | "try"
+    message: str
+
 class SuggestionOut(BaseModel):
     exercise_id: UUID
     exercise_name: str
@@ -225,6 +246,7 @@ class SuggestionOut(BaseModel):
     reason: str
     pr: Optional[PRData] = None
     last_session: Optional[LastSessionData] = None
+    double_progression: Optional[DoubleProgressionOut] = None
 
 
 # ─── Progress ─────────────────────────────────────────────────────────────────
@@ -249,6 +271,32 @@ class ExerciseProgressOut(BaseModel):
     pr: Optional[PRData] = None
     best_e1rm: Optional[float] = None
     plateau: PlateauOut
+
+
+# ─── Volume ───────────────────────────────────────────────────────────────────
+
+class MuscleVolumeOut(BaseModel):
+    muscle: str
+    sets: int
+
+class VolumeOut(BaseModel):
+    period: str            # week | all
+    total_sets: int
+    muscles: list[MuscleVolumeOut]
+
+
+# ─── Missed sessions ──────────────────────────────────────────────────────────
+
+class MissedSessionOut(BaseModel):
+    id: UUID
+    date: date
+    reason: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+class MissedAnswerRequest(BaseModel):
+    reason: str
 
 
 # ─── Program Summary ──────────────────────────────────────────────────────────

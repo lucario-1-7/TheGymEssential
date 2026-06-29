@@ -39,6 +39,34 @@ def best_e1rm(sets) -> Optional[float]:
     return best
 
 
+def double_progression_cue(sets, target_reps_max: Optional[int]) -> Optional[dict]:
+    """Double-progression signal from last session's working sets.
+
+    Needs a rep-range ceiling (target_reps_max) to judge against. Returns:
+      - level "add": you hit the top of the range on at least one set → add weight.
+      - level "try": you didn't hit it, but reps + RIR says you had it in you
+        (e.g. 7 reps @ 1 RIR or 6 reps @ 2 RIR against a max of 8) → try adding weight.
+      - None: no rep ceiling, no working sets, or still mid-range.
+    """
+    if not target_reps_max:
+        return None
+    working = [s for s in sets if not getattr(s, "is_warmup", False) and s.rir is not None]
+    if not working:
+        return None
+
+    if any(s.reps >= target_reps_max for s in working):
+        return {
+            "level": "add",
+            "message": f"Add weight — you hit the top of your rep range ({target_reps_max}) last time.",
+        }
+    if any((s.reps + s.rir) >= target_reps_max for s in working):
+        return {
+            "level": "try",
+            "message": f"Try adding weight — you had reps in reserve at the top of your range ({target_reps_max}) last time.",
+        }
+    return None
+
+
 def linreg_slope(xs: Sequence[float], ys: Sequence[float]) -> Optional[float]:
     """Slope of the least-squares best-fit line through (xs, ys).
 

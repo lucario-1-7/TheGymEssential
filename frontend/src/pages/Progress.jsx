@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
 import { get } from '../api/index.js'
+import { useUserId } from '../auth/AuthContext'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import TrendChart from '../components/TrendChart'
-
-const USER_ID = 'd45ce928-b4dc-4d4a-9a7b-8e9450f7138d'
 
 const METRICS = [
   { key: 'e1rm',         label: 'Est. 1RM',   unit: 'kg', color: '#60a5fa' },
@@ -12,6 +11,7 @@ const METRICS = [
 ]
 
 export default function Progress() {
+  const USER_ID = useUserId()
   const [exercises, setExercises] = useState([])
   const [selected, setSelected] = useState('')
   const [data, setData] = useState(null)

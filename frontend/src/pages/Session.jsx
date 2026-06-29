@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { get, post, del } from '../api/index.js'
+import { useUserId } from '../auth/AuthContext'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 
-const USER_ID = 'd45ce928-b4dc-4d4a-9a7b-8e9450f7138d'
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 export default function Session() {
+  const USER_ID = useUserId()
   const { sessionId } = useParams()
   const [session, setSession] = useState(null)
   const [exercises, setExercises] = useState([])
@@ -274,6 +275,16 @@ function ExerciseBlock({ se, suggestion, onLogSet, onDeleteSet }) {
         )}
 
         <div className="space-y-4">
+          {suggestion?.double_progression && (
+            <div className={`rounded-md px-3 py-2 text-sm font-medium border ${
+              suggestion.double_progression.level === 'add'
+                ? 'bg-green-950/20 border-green-900/40 text-green-400'
+                : 'bg-blue-950/20 border-blue-900/40 text-blue-300'
+            }`}>
+              {suggestion.double_progression.level === 'add' ? '⬆️ ' : '💡 '}
+              {suggestion.double_progression.message}
+            </div>
+          )}
           {(suggestion?.pr || suggestion?.last_session) && (
             <div className={`grid gap-2 text-xs ${suggestion?.pr && suggestion?.last_session ? 'grid-cols-2' : 'grid-cols-1'}`}>
               {suggestion.pr && (

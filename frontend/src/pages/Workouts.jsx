@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { get, post, patch, put, del } from '../api/index.js'
+import { useUserId } from '../auth/AuthContext'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 
-const USER_ID = 'd45ce928-b4dc-4d4a-9a7b-8e9450f7138d'
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 export default function Workouts() {
+  const USER_ID = useUserId()
   const [programs, setPrograms] = useState([])
   const [exercises, setExercises] = useState([])
   const [showCreate, setShowCreate] = useState(false)

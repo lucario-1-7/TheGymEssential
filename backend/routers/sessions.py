@@ -5,9 +5,9 @@ from models import Session, SessionExercise, SetLog, Exercise
 from schemas import (
     SessionCreate, SessionOut, SessionDetailOut,
     SessionExerciseCreate, SessionExerciseOut,
-    SetCreate, SetOut, SuggestionOut, LastPerformanceOut
+    SetCreate, SetOut, SuggestionOut, LastPerformanceOut, DoubleProgressionOut
 )
-from analytics import best_e1rm
+from analytics import best_e1rm, double_progression_cue
 from uuid import UUID
 from datetime import date as date_cls
 
@@ -270,6 +270,7 @@ def get_suggestion(user_id: UUID, exercise_id: UUID, db: DBSession = Depends(get
             }
 
     result = compute_suggestion(exercise, last_se.sets)
+    dp = double_progression_cue(last_se.sets, last_se.target_reps_max)
     return SuggestionOut(
         exercise_id=exercise_id,
         exercise_name=exercise.name,
@@ -279,4 +280,5 @@ def get_suggestion(user_id: UUID, exercise_id: UUID, db: DBSession = Depends(get
         reason=result["reason"],
         pr=pr_data,
         last_session=last_session_data,
+        double_progression=DoubleProgressionOut(**dp) if dp else None,
     )

@@ -20,6 +20,8 @@ class User(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String, nullable=False)
+    username = Column(String, nullable=True, unique=True, index=True)
+    password_hash = Column(String, nullable=True)
     is_admin = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -39,6 +41,18 @@ class BodyweightLog(Base):
     date = Column(Date, nullable=False)
 
     user = relationship("User", back_populates="bodyweight_logs")
+
+
+class MissedSession(Base):
+    __tablename__ = "missed_sessions"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    date = Column(Date, nullable=False)          # the scheduled training day that was skipped
+    reason = Column(Text, nullable=True)         # null until the user explains why
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (UniqueConstraint("user_id", "date"),)
 
 
 class MuscleGroup(Base):
