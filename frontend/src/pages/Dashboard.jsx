@@ -8,6 +8,11 @@ import angryEmoji from '../assets/angry-emoji.png'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
+const VOLUME_PERIODS = [
+  { key: 'week', label: 'This week' },
+  { key: 'all',  label: 'All time'  },
+]
+
 export default function Dashboard() {
   const USER_ID = useUserId()
   const [sessions, setSessions] = useState([])
@@ -17,6 +22,8 @@ export default function Dashboard() {
   const [missedPending, setMissedPending] = useState([])
   const [missedReason, setMissedReason] = useState('')
   const [missedDone, setMissedDone] = useState(false)
+  const [volume, setVolume] = useState(null)
+  const [volumePeriod, setVolumePeriod] = useState('week')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -49,6 +56,12 @@ export default function Dashboard() {
     // Detect skipped scheduled sessions since the last time you trained.
     post(`/missed/${USER_ID}/scan`).then(setMissedPending).catch(() => {})
   }, [])
+
+  // Per-muscle volume tracker — refetches when the period toggle changes.
+  useEffect(() => {
+    setVolume(null)
+    get(`/volume/${USER_ID}?period=${volumePeriod}`).then(setVolume).catch(() => setVolume(null))
+  }, [volumePeriod])
 
   async function startSession() {
     const today = new Date().toISOString().split('T')[0]
@@ -188,6 +201,54 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+
+      {/* Per-muscle volume tracker */}
+      <Card className="bg-gray-900 border-gray-800">
+        <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
+          <CardTitle className="text-base">Volume by muscle</CardTitle>
+          <div className="flex gap-1">
+            {VOLUME_PERIODS.map(p => (
+              <button
+                key={p.key}
+                onClick={() => setVolumePeriod(p.key)}
+                className={`px-2.5 py-1 rounded-md text-xs transition-colors ${
+                  volumePeriod === p.key ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-800'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {!volume && <p className="text-sm text-gray-500">Loading...</p>}
+          {volume && volume.muscles.length === 0 && (
+            <p className="text-sm text-gray-500">No sets logged in this period.</p>
+          )}
+          {volume && volume.muscles.length > 0 && (() => {
+            const max = Math.max(...volume.muscles.map(m => m.sets))
+            return (
+              <>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">
+                  {volume.total_sets} total sets
+                </p>
+                {volume.muscles.map(m => (
+                  <div key={m.muscle} className="flex items-center gap-3">
+                    <span className="w-24 text-sm capitalize text-gray-300">{m.muscle}</span>
+                    <div className="flex-1 bg-gray-800 rounded h-5 overflow-hidden">
+                      <div
+                        className="bg-blue-500/70 h-full rounded"
+                        style={{ width: max ? `${(m.sets / max) * 100}%` : '0%' }}
+                      />
+                    </div>
+                    <span className="w-8 text-right text-sm text-gray-400">{m.sets}</span>
+                  </div>
+                ))}
+              </>
+            )
+          })()}
+        </CardContent>
+      </Card>
     </div>
   )
 }

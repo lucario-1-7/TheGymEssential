@@ -8,7 +8,6 @@ const links = [
   { to: '/exercises',   label: 'Exercises'      },
   { to: '/history',     label: 'History'        },
   { to: '/progress',    label: 'Progress'       },
-  { to: '/volume',      label: 'Volume'         },
   { to: '/bodyweight',  label: 'Bodyweight'     },
   { to: '/mesocycles',  label: 'Mesocycles'     },
 ]

@@ -12,7 +12,6 @@ import Progress from './pages/Progress'
 import Bodyweight from './pages/Bodyweight'
 import History from './pages/History'
 import Outlines from './pages/Outlines'
-import Volume from './pages/Volume'
 
 function App() {
   const { token } = useAuth()
@@ -41,7 +40,6 @@ function App() {
         <Route path="bodyweight" element={<Bodyweight />} />
         <Route path="history" element={<History />} />
         <Route path="outlines" element={<Outlines />} />
-        <Route path="volume" element={<Volume />} />
       </Route>
     </Routes>
   )
