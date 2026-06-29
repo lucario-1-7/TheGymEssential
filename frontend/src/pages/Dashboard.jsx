@@ -1,17 +1,22 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { get, post } from '../api/index.js'
+import { useUserId } from '../auth/AuthContext'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import angryEmoji from '../assets/angry-emoji.png'
 
-const USER_ID = 'd45ce928-b4dc-4d4a-9a7b-8e9450f7138d'
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 export default function Dashboard() {
+  const USER_ID = useUserId()
   const [sessions, setSessions] = useState([])
   const [todayPlan, setTodayPlan] = useState(null)
   const [lastWeekSession, setLastWeekSession] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [missedPending, setMissedPending] = useState([])
+  const [missedReason, setMissedReason] = useState('')
+  const [missedDone, setMissedDone] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -40,6 +45,9 @@ export default function Dashboard() {
     get(`/programs/${USER_ID}/today`)
       .then(data => setTodayPlan(data))
       .catch(() => setTodayPlan(null))
+
+    // Detect skipped scheduled sessions since the last time you trained.
+    post(`/missed/${USER_ID}/scan`).then(setMissedPending).catch(() => {})
   }, [])
 
   async function startSession() {
@@ -48,10 +56,57 @@ export default function Dashboard() {
     navigate(`/session/${session.id}`)
   }
 
+  async function submitMissedReason() {
+    if (!missedReason.trim()) return
+    await post(`/missed/${USER_ID}/answer`, { reason: missedReason.trim() })
+    setMissedPending([])
+    setMissedDone(true)
+  }
+
   const todayName = DAYS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1]
 
   return (
     <div className="space-y-6">
+      {(missedPending.length > 0 || missedDone) && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-6">
+          <Card className="bg-gray-900 border-gray-700 w-full max-w-md">
+            <CardContent className="pt-6 space-y-4">
+              {!missedDone ? (
+                <>
+                  <img
+                    src={angryEmoji}
+                    alt=""
+                    className="w-20 h-20 mx-auto"
+                  />
+                  <h3 className="text-lg font-bold text-red-400 tracking-wide text-center">
+                    WHY DID YOU MISS THE LAST SESSION
+                  </h3>
+                  {missedPending.length > 1 && (
+                    <p className="text-xs text-gray-500">
+                      You skipped {missedPending.length} scheduled sessions.
+                    </p>
+                  )}
+                  <textarea
+                    value={missedReason}
+                    onChange={e => setMissedReason(e.target.value)}
+                    rows={3}
+                    placeholder="Your reason..."
+                    className="w-full bg-gray-800 border border-gray-700 rounded-md p-2 text-sm"
+                    autoFocus
+                  />
+                  <Button onClick={submitMissedReason} className="w-full">Submit</Button>
+                </>
+              ) : (
+                <>
+                  <p className="text-lg font-bold text-center">Don't let that happen again</p>
+                  <Button onClick={() => setMissedDone(false)} className="w-full">Got it</Button>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-medium">Dashboard</h2>
         <Button onClick={startSession}>Start session</Button>
