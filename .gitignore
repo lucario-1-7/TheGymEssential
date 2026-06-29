@@ -3,3 +3,7 @@ __pycache__/
 *.pyc
 .env
 .claude/
+
+# Local planning / scratch docs — kept out of the repo
+SUGGESTIONS.md
+roadmapFinal.md

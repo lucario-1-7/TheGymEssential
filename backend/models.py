@@ -193,6 +193,12 @@ class SessionExercise(Base):
     order_index = Column(Integer, nullable=False)
     notes = Column(Text, nullable=True)
 
+    # Snapshot of the plan at the time of the session (copied from the program), so
+    # the daily log can show sets done vs planned even if the program changes later.
+    target_sets = Column(Integer, nullable=True)
+    target_reps_min = Column(Integer, nullable=True)
+    target_reps_max = Column(Integer, nullable=True)
+
     session = relationship("Session", back_populates="session_exercises")
     exercise = relationship("Exercise", back_populates="session_exercises", lazy="selectin")
     sets = relationship(

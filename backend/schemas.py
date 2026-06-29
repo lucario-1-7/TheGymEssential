@@ -165,12 +165,18 @@ class SessionExerciseCreate(BaseModel):
     exercise_id: UUID
     order_index: int
     notes: Optional[str] = None
+    target_sets: Optional[int] = None
+    target_reps_min: Optional[int] = None
+    target_reps_max: Optional[int] = None
 
 class SessionExerciseOut(BaseModel):
     id: UUID
     exercise: ExerciseOut
     order_index: int
     notes: Optional[str]
+    target_sets: Optional[int]
+    target_reps_min: Optional[int]
+    target_reps_max: Optional[int]
     sets: list[SetOut]
 
     class Config:

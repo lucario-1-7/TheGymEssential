@@ -8,6 +8,8 @@ import Layout from './components/Layout'
 import Workouts from './pages/Workouts'
 import Progress from './pages/Progress'
 import Bodyweight from './pages/Bodyweight'
+import History from './pages/History'
+import Outlines from './pages/Outlines'
 
 function App() {
   return (
@@ -21,6 +23,8 @@ function App() {
         <Route path="workouts" element={<Workouts />} />
         <Route path="progress" element={<Progress />} />
         <Route path="bodyweight" element={<Bodyweight />} />
+        <Route path="history" element={<History />} />
+        <Route path="outlines" element={<Outlines />} />
       </Route>
     </Routes>
   )

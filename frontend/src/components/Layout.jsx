@@ -1,12 +1,14 @@
 import { Outlet, NavLink } from 'react-router-dom'
 
 const links = [
-  { to: '/',            label: 'Dashboard'   },
-  { to: '/workouts',    label: 'My Workouts' },
-  { to: '/exercises',   label: 'Exercises'   },
-  { to: '/progress',    label: 'Progress'    },
-  { to: '/bodyweight',  label: 'Bodyweight'  },
-  { to: '/mesocycles',  label: 'Mesocycles'  },
+  { to: '/',            label: 'Dashboard'      },
+  { to: '/workouts',    label: 'My Workouts'    },
+  { to: '/outlines',    label: 'Workout Outlines' },
+  { to: '/exercises',   label: 'Exercises'      },
+  { to: '/history',     label: 'History'        },
+  { to: '/progress',    label: 'Progress'       },
+  { to: '/bodyweight',  label: 'Bodyweight'     },
+  { to: '/mesocycles',  label: 'Mesocycles'     },
 ]
 
 export default function Layout() {

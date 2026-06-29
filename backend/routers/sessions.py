@@ -105,6 +105,9 @@ def add_exercise_to_session(
         exercise_id=body.exercise_id,
         order_index=body.order_index,
         notes=body.notes,
+        target_sets=body.target_sets,
+        target_reps_min=body.target_reps_min,
+        target_reps_max=body.target_reps_max,
     )
     db.add(se)
     db.commit()

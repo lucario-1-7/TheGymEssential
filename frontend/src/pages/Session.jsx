@@ -29,6 +29,9 @@ export default function Session() {
               await post(`/sessions/detail/${sessionId}/exercises`, {
                 exercise_id: ex.exercise.id,
                 order_index: i,
+                target_sets: ex.target_sets,
+                target_reps_min: ex.target_reps_min,
+                target_reps_max: ex.target_reps_max,
               })
             }
             // reload session after populating
@@ -213,17 +216,32 @@ function ExerciseBlock({ se, suggestion, onLogSet, onDeleteSet }) {
     setForm(f => ({ ...f, reps: '', rir: '', is_warmup: false, notes: '' }))
   }
 
-  // target sets/reps from program if available
-  const target = se.target_sets
-    ? `${se.target_sets} sets · ${se.target_reps_min}–${se.target_reps_max} reps`
+  // Working sets done = distinct set numbers (a unilateral set is two rows but one set).
+  const setsDone = se.sets?.length
+    ? new Set(se.sets.filter(s => !s.is_warmup).map(s => s.set_number)).size
+    : 0
+  const repTarget = se.target_reps_min
+    ? `${se.target_reps_min}–${se.target_reps_max} reps`
     : null
+
+  // Sets done vs the planned target, with an over/under flag for the daily log.
+  let setStatus
+  if (se.target_sets != null) {
+    const diff = setsDone - se.target_sets
+    if (diff === 0) setStatus = { text: `${setsDone}/${se.target_sets} sets`, cls: 'text-green-400' }
+    else if (diff > 0) setStatus = { text: `${setsDone}/${se.target_sets} sets · +${diff} extra`, cls: 'text-amber-400' }
+    else setStatus = { text: `${setsDone}/${se.target_sets} sets · ${-diff} short`, cls: 'text-orange-400' }
+  } else {
+    setStatus = { text: `${setsDone} set${setsDone === 1 ? '' : 's'}`, cls: 'text-gray-500' }
+  }
 
   return (
     <Card className="bg-gray-900 border-gray-800">
       <CardHeader className="pb-2">
         <CardTitle className="text-base">{se.exercise.name}</CardTitle>
-        <div className="flex gap-3 mt-0.5">
-          {target && <p className="text-xs text-gray-500">{target}</p>}
+        <div className="flex gap-3 mt-0.5 flex-wrap items-center">
+          <p className={`text-xs font-medium ${setStatus.cls}`}>{setStatus.text}</p>
+          {repTarget && <p className="text-xs text-gray-500">{repTarget}</p>}
           {suggestion && <p className="text-xs text-blue-400">{suggestion.reason}</p>}
         </div>
       </CardHeader>
