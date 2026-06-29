@@ -1,13 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session as DBSession
 from deps import get_db
 from models import Session, SessionExercise, SetLog, Exercise
 from schemas import (
     SessionCreate, SessionOut, SessionDetailOut,
     SessionExerciseCreate, SessionExerciseOut,
-    SetCreate, SetOut, SuggestionOut
+    SetCreate, SetOut, SuggestionOut, LastPerformanceOut
 )
+from analytics import best_e1rm
 from uuid import UUID
+from datetime import date as date_cls
 
 router = APIRouter()
 
@@ -32,6 +34,42 @@ def list_sessions(user_id: UUID, db: DBSession = Depends(get_db)):
     return db.query(Session).filter(
         Session.user_id == user_id
     ).order_by(Session.date.desc()).all()
+
+
+@router.get("/{user_id}/by-date", response_model=list[SessionDetailOut])
+def sessions_by_date(
+    user_id: UUID,
+    date: date_cls = Query(..., description="Calendar date, e.g. 2026-04-18"),
+    db: DBSession = Depends(get_db),
+):
+    """Full session detail for a given day. Empty list = no session logged that day.
+
+    Returns a list because nothing stops a user logging more than one session in a day.
+    """
+    return db.query(Session).filter(
+        Session.user_id == user_id,
+        Session.date == date,
+    ).all()
+
+
+@router.get("/{user_id}/last-performance/{exercise_id}", response_model=LastPerformanceOut)
+def last_performance(user_id: UUID, exercise_id: UUID, db: DBSession = Depends(get_db)):
+    """Most recent logged sets for an exercise — the 'beat the logbook' reference."""
+    last_se = (
+        db.query(SessionExercise)
+        .join(Session)
+        .filter(Session.user_id == user_id, SessionExercise.exercise_id == exercise_id)
+        .order_by(Session.date.desc())
+        .first()
+    )
+    if not last_se:
+        return LastPerformanceOut(exercise_id=exercise_id, date=None, sets=[], best_e1rm=None)
+    return LastPerformanceOut(
+        exercise_id=exercise_id,
+        date=last_se.session.date,
+        sets=last_se.sets,
+        best_e1rm=best_e1rm(last_se.sets),
+    )
 
 
 @router.get("/detail/{session_id}", response_model=SessionDetailOut)
@@ -90,10 +128,10 @@ def log_set(
         session_exercise_id=session_exercise_id,
         set_number=body.set_number,
         weight_kg=body.weight_kg,
-        weight_kg_left=body.weight_kg_left,
-        weight_kg_right=body.weight_kg_right,
+        side=body.side,
         reps=body.reps,
         rir=body.rir,
+        is_warmup=body.is_warmup,
         notes=body.notes,
     )
     db.add(set_log)
@@ -124,28 +162,36 @@ def compute_suggestion(exercise: Exercise, last_sets: list[SetLog]) -> dict:
     }
     step = increments.get(exercise.movement_pattern, 2.5)
 
-    working_sets = [s for s in last_sets if s.rir is not None]
+    # Warm-ups don't reflect working effort, so they're excluded from the RIR read.
+    working_sets = [s for s in last_sets if s.rir is not None and not s.is_warmup]
     if not working_sets:
-        return {"reason": "No sets logged yet", "weight": None}
+        return {"reason": "No sets logged yet", "weight": None, "weight_left": None, "weight_right": None}
 
     avg_rir = sum(s.rir for s in working_sets) / len(working_sets)
 
+    # Three clear bands on average reps-in-reserve. RIR can't signal a *missed*
+    # lift (it bottoms out at 0 = failure), so there's no "drop weight" band here:
+    # a low average means you're already training close to failure — hold and let
+    # reps accumulate before adding load.
     if avg_rir >= 3:
         action, weight_change = "Add weight — too easy", step
-    elif avg_rir in [1, 2] or (1 <= avg_rir < 3):
+    elif avg_rir >= 1:
         action, weight_change = "Same weight, aim for more reps", 0
-    elif avg_rir == 0:
-        action, weight_change = "Consolidate before progressing", 0
     else:
-        action, weight_change = "Missed reps — drop weight slightly", -step
+        action, weight_change = "Consolidate before progressing", 0
+
+    def last_side_weight(side: str):
+        side_sets = [s for s in working_sets if s.side == side]
+        if not side_sets:
+            return None
+        return round((side_sets[-1].weight_kg or 0) + weight_change, 2)
 
     if exercise.is_unilateral:
-        last = working_sets[-1]
         return {
             "reason": action,
             "weight": None,
-            "weight_left": round((last.weight_kg_left or 0) + weight_change, 2),
-            "weight_right": round((last.weight_kg_right or 0) + weight_change, 2),
+            "weight_left": last_side_weight("left"),
+            "weight_right": last_side_weight("right"),
         }
     else:
         last_weight = working_sets[-1].weight_kg or 0
@@ -204,16 +250,15 @@ def get_suggestion(user_id: UUID, exercise_id: UUID, db: DBSession = Depends(get
         best_reps = -1
         best_set = None
         for s_log, s_date in all_sets:
-            w = s_log.weight_kg
-            if exercise.is_unilateral:
-                w = s_log.weight_kg_left if s_log.weight_kg_left else s_log.weight_kg_right
-            w = w or 0.0
-            
+            if s_log.is_warmup:
+                continue
+            w = s_log.weight_kg or 0.0
+
             if w > best_weight or (w == best_weight and s_log.reps > best_reps):
                 best_weight = w
                 best_reps = s_log.reps
                 best_set = (s_log, s_date)
-        
+
         if best_set:
             pr_data = {
                 "weight_kg": best_weight,

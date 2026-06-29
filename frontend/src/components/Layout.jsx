@@ -4,6 +4,8 @@ const links = [
   { to: '/',            label: 'Dashboard'   },
   { to: '/workouts',    label: 'My Workouts' },
   { to: '/exercises',   label: 'Exercises'   },
+  { to: '/progress',    label: 'Progress'    },
+  { to: '/bodyweight',  label: 'Bodyweight'  },
   { to: '/mesocycles',  label: 'Mesocycles'  },
 ]
 

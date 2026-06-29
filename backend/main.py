@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
-from routers import users, exercises, sessions, mesocycles, programs
+from routers import users, exercises, sessions, mesocycles, programs, progress
 
 Base.metadata.create_all(bind=engine)
 
@@ -19,3 +19,4 @@ app.include_router(exercises.router, prefix="/exercises", tags=["exercises"])
 app.include_router(sessions.router, prefix="/sessions", tags=["sessions"])
 app.include_router(mesocycles.router, prefix="/mesocycles", tags=["mesocycles"])
 app.include_router(programs.router, prefix="/programs", tags=["programs"])
+app.include_router(progress.router, prefix="/progress", tags=["progress"])

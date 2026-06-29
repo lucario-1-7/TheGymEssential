@@ -88,7 +88,7 @@ export default function Dashboard() {
                   <p className="text-xs text-gray-400 font-medium mb-2 uppercase tracking-wide">Last time you did this ({lastWeekSession.date})</p>
                   <div className="space-y-1.5">
                   {lastWeekSession.session_exercises?.map((se, idx) => {
-                    const topWeight = se.sets.length > 0 ? Math.max(...se.sets.map(s => s.weight_kg || s.weight_kg_left || 0)) : 0
+                    const topWeight = se.sets.length > 0 ? Math.max(...se.sets.map(s => s.weight_kg || 0)) : 0
                     return (
                       <div key={idx} className="flex items-center justify-between text-xs">
                         <span className="text-gray-300">{se.exercise.name}</span>

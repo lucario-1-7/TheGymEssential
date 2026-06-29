@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Literal
 from datetime import date, datetime
 from uuid import UUID
 
@@ -134,23 +134,25 @@ class SessionOut(BaseModel):
 
 # ─── Set ──────────────────────────────────────────────────────────────────────
 
+Side = Literal["both", "left", "right"]
+
 class SetCreate(BaseModel):
     set_number: int
     weight_kg: Optional[float] = None
-    weight_kg_left: Optional[float] = None
-    weight_kg_right: Optional[float] = None
+    side: Side = "both"
     reps: int
     rir: int
+    is_warmup: bool = False
     notes: Optional[str] = None
 
 class SetOut(BaseModel):
     id: UUID
     set_number: int
     weight_kg: Optional[float]
-    weight_kg_left: Optional[float]
-    weight_kg_right: Optional[float]
+    side: Side
     reps: int
     rir: int
+    is_warmup: bool
     notes: Optional[str]
 
     class Config:
@@ -200,6 +202,14 @@ class LastSessionData(BaseModel):
     date: date
     sets: list[SetOut]
 
+
+class LastPerformanceOut(BaseModel):
+    """Last time this exercise was logged — powers the 'beat the logbook' view."""
+    exercise_id: UUID
+    date: Optional[date]
+    sets: list[SetOut]
+    best_e1rm: Optional[float]
+
 class SuggestionOut(BaseModel):
     exercise_id: UUID
     exercise_name: str
@@ -209,6 +219,30 @@ class SuggestionOut(BaseModel):
     reason: str
     pr: Optional[PRData] = None
     last_session: Optional[LastSessionData] = None
+
+
+# ─── Progress ─────────────────────────────────────────────────────────────────
+
+class ProgressPoint(BaseModel):
+    date: date
+    e1rm: Optional[float]
+    top_weight: Optional[float]
+    total_volume: Optional[float]
+
+class PlateauOut(BaseModel):
+    is_plateaued: bool
+    status: str            # ok | insufficient_data
+    message: str
+    slope_per_week: Optional[float]
+    weeks_analyzed: float
+
+class ExerciseProgressOut(BaseModel):
+    exercise_id: UUID
+    exercise_name: str
+    series: list[ProgressPoint]
+    pr: Optional[PRData] = None
+    best_e1rm: Optional[float] = None
+    plateau: PlateauOut
 
 
 # ─── Program Summary ──────────────────────────────────────────────────────────

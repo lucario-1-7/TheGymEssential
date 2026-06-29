@@ -6,6 +6,8 @@ import Mesocycles from './pages/Mesocycles'
 import Summary from './pages/Summary'
 import Layout from './components/Layout'
 import Workouts from './pages/Workouts'
+import Progress from './pages/Progress'
+import Bodyweight from './pages/Bodyweight'
 
 function App() {
   return (
@@ -17,6 +19,8 @@ function App() {
         <Route path="mesocycles" element={<Mesocycles />} />
         <Route path="mesocycles/:mesocycleId/summary" element={<Summary />} />
         <Route path="workouts" element={<Workouts />} />
+        <Route path="progress" element={<Progress />} />
+        <Route path="bodyweight" element={<Bodyweight />} />
       </Route>
     </Routes>
   )

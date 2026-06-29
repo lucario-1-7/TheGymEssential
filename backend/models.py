@@ -5,6 +5,7 @@ from sqlalchemy import (
 from database import Base
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import expression
 from datetime import datetime
 import uuid
 import enum
@@ -33,7 +34,7 @@ class BodyweightLog(Base):
     __tablename__ = "bodyweight_logs"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     weight_kg = Column(Float, nullable=False)
     date = Column(Date, nullable=False)
 
@@ -63,47 +64,59 @@ class UserMuscleVolume(Base):
     __table_args__ = (UniqueConstraint("user_id", "muscle_group_id"),)
 
     user = relationship("User", back_populates="muscle_volumes")
-    muscle_group = relationship("MuscleGroup", back_populates="user_volumes")
+    muscle_group = relationship("MuscleGroup", back_populates="user_volumes", lazy="selectin")
 
 
 class Program(Base):
     __tablename__ = "programs"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     name = Column(String, nullable=False)
     is_active = Column(Boolean, default=False)
 
     user = relationship("User", back_populates="programs")
-    days = relationship("ProgramDay", cascade="all, delete-orphan", back_populates="program")
+    days = relationship(
+        "ProgramDay",
+        cascade="all, delete-orphan",
+        back_populates="program",
+        order_by="ProgramDay.day_of_week",
+        lazy="selectin",
+    )
 
 
 class ProgramDay(Base):
     __tablename__ = "program_days"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    program_id = Column(UUID(as_uuid=True), ForeignKey("programs.id"), nullable=False)
+    program_id = Column(UUID(as_uuid=True), ForeignKey("programs.id"), nullable=False, index=True)
     day_of_week = Column(Integer, nullable=False)  # 0=Monday, 6=Sunday
     is_rest = Column(Boolean, default=False)
     label = Column(String, nullable=True)
 
     program = relationship("Program", back_populates="days")
-    exercises = relationship("ProgramExercise", cascade="all, delete-orphan", back_populates="program_day")
+    exercises = relationship(
+        "ProgramExercise",
+        cascade="all, delete-orphan",
+        back_populates="program_day",
+        order_by="ProgramExercise.order_index",
+        lazy="selectin",
+    )
 
 
 class ProgramExercise(Base):
     __tablename__ = "program_exercises"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    program_day_id = Column(UUID(as_uuid=True), ForeignKey("program_days.id"), nullable=False)
-    exercise_id = Column(UUID(as_uuid=True), ForeignKey("exercises.id"), nullable=False)
+    program_day_id = Column(UUID(as_uuid=True), ForeignKey("program_days.id"), nullable=False, index=True)
+    exercise_id = Column(UUID(as_uuid=True), ForeignKey("exercises.id"), nullable=False, index=True)
     order_index = Column(Integer, nullable=False)
     target_sets = Column(Integer, nullable=True)
     target_reps_min = Column(Integer, nullable=True)
     target_reps_max = Column(Integer, nullable=True)
 
     program_day = relationship("ProgramDay", back_populates="exercises")
-    exercise = relationship("Exercise")
+    exercise = relationship("Exercise", lazy="selectin")
 
 
 class Exercise(Base):
@@ -115,7 +128,12 @@ class Exercise(Base):
     equipment = Column(String, nullable=False)          # barbell, dumbbell, cable, machine, bodyweight
     is_unilateral = Column(Boolean, default=False)
 
-    muscle_targets = relationship("ExerciseMuscle", cascade="all, delete-orphan", back_populates="exercise")
+    muscle_targets = relationship(
+        "ExerciseMuscle",
+        cascade="all, delete-orphan",
+        back_populates="exercise",
+        lazy="selectin",
+    )
     session_exercises = relationship("SessionExercise", back_populates="exercise")
 
 
@@ -123,12 +141,12 @@ class ExerciseMuscle(Base):
     __tablename__ = "exercise_muscles"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    exercise_id = Column(UUID(as_uuid=True), ForeignKey("exercises.id"), nullable=False)
-    muscle_group_id = Column(UUID(as_uuid=True), ForeignKey("muscle_groups.id"), nullable=False)
+    exercise_id = Column(UUID(as_uuid=True), ForeignKey("exercises.id"), nullable=False, index=True)
+    muscle_group_id = Column(UUID(as_uuid=True), ForeignKey("muscle_groups.id"), nullable=False, index=True)
     is_primary = Column(Boolean, default=True)
 
     exercise = relationship("Exercise", back_populates="muscle_targets")
-    muscle_group = relationship("MuscleGroup", back_populates="exercise_targets")
+    muscle_group = relationship("MuscleGroup", back_populates="exercise_targets", lazy="selectin")
 
 
 class Mesocycle(Base):
@@ -150,7 +168,7 @@ class Session(Base):
     __tablename__ = "sessions"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
     mesocycle_id = Column(UUID(as_uuid=True), ForeignKey("mesocycles.id"), nullable=True)
     date = Column(Date, nullable=False)
     session_rpe = Column(Integer, nullable=True)
@@ -158,37 +176,49 @@ class Session(Base):
 
     user = relationship("User", back_populates="sessions")
     mesocycle = relationship("Mesocycle", back_populates="sessions")
-    session_exercises = relationship("SessionExercise", back_populates="session")
+    session_exercises = relationship(
+        "SessionExercise",
+        back_populates="session",
+        order_by="SessionExercise.order_index",
+        lazy="selectin",
+    )
 
 
 class SessionExercise(Base):
     __tablename__ = "session_exercises"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    session_id = Column(UUID(as_uuid=True), ForeignKey("sessions.id"), nullable=False)
-    exercise_id = Column(UUID(as_uuid=True), ForeignKey("exercises.id"), nullable=False)
+    session_id = Column(UUID(as_uuid=True), ForeignKey("sessions.id"), nullable=False, index=True)
+    exercise_id = Column(UUID(as_uuid=True), ForeignKey("exercises.id"), nullable=False, index=True)
     order_index = Column(Integer, nullable=False)
     notes = Column(Text, nullable=True)
 
     session = relationship("Session", back_populates="session_exercises")
-    exercise = relationship("Exercise", back_populates="session_exercises")
-    sets = relationship("SetLog", back_populates="session_exercise")
+    exercise = relationship("Exercise", back_populates="session_exercises", lazy="selectin")
+    sets = relationship(
+        "SetLog",
+        back_populates="session_exercise",
+        order_by="SetLog.set_number",
+        lazy="selectin",
+    )
 
 
 class SetLog(Base):
     __tablename__ = "set_logs"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    session_exercise_id = Column(UUID(as_uuid=True), ForeignKey("session_exercises.id"), nullable=False)
+    session_exercise_id = Column(UUID(as_uuid=True), ForeignKey("session_exercises.id"), nullable=False, index=True)
     set_number = Column(Integer, nullable=False)
 
-    # bilateral: use weight_kg. unilateral: use left/right
+    # One row carries one load + which side it was performed on. Bilateral lifts use
+    # side="both"; unilateral lifts log a "left" row and a "right" row, which makes
+    # left/right asymmetry tracking a simple GROUP BY side.
     weight_kg = Column(Float, nullable=True)
-    weight_kg_left = Column(Float, nullable=True)
-    weight_kg_right = Column(Float, nullable=True)
+    side = Column(String, nullable=False, server_default="both", default="both")
 
     reps = Column(Integer, nullable=False)
     rir = Column(Integer, nullable=False)
+    is_warmup = Column(Boolean, nullable=False, server_default=expression.false(), default=False)
     notes = Column(Text, nullable=True)
 
     session_exercise = relationship("SessionExercise", back_populates="sets")

@@ -168,7 +168,11 @@ export default function Session() {
 
 function ExerciseBlock({ se, suggestion, onLogSet, onDeleteSet }) {
   const isUnilateral = se.exercise.is_unilateral
-  const nextSetNumber = (se.sets?.length || 0) + 1
+  // A unilateral "set" is two rows (left + right) sharing one set_number, so count
+  // by the highest set_number rather than the number of rows.
+  const nextSetNumber = se.sets?.length
+    ? Math.max(...se.sets.map(s => s.set_number)) + 1
+    : 1
 
   const [form, setForm] = useState({
     weight_kg: '',
@@ -176,6 +180,7 @@ function ExerciseBlock({ se, suggestion, onLogSet, onDeleteSet }) {
     weight_kg_right: '',
     reps: '',
     rir: '',
+    is_warmup: false,
     notes: '',
   })
 
@@ -191,16 +196,21 @@ function ExerciseBlock({ se, suggestion, onLogSet, onDeleteSet }) {
 
   async function handleLog() {
     if (!form.reps || form.rir === '') return
-    await onLogSet({
+    const base = {
       set_number: nextSetNumber,
       reps: parseInt(form.reps),
       rir: parseInt(form.rir),
+      is_warmup: form.is_warmup,
       notes: form.notes || null,
-      weight_kg: isUnilateral ? null : parseFloat(form.weight_kg) || null,
-      weight_kg_left: isUnilateral ? parseFloat(form.weight_kg_left) || null : null,
-      weight_kg_right: isUnilateral ? parseFloat(form.weight_kg_right) || null : null,
-    })
-    setForm(f => ({ ...f, reps: '', rir: '', notes: '' }))
+    }
+    if (isUnilateral) {
+      // One left row and one right row, same set_number — enables asymmetry tracking.
+      await onLogSet({ ...base, weight_kg: parseFloat(form.weight_kg_left) || null, side: 'left' })
+      await onLogSet({ ...base, weight_kg: parseFloat(form.weight_kg_right) || null, side: 'right' })
+    } else {
+      await onLogSet({ ...base, weight_kg: parseFloat(form.weight_kg) || null, side: 'both' })
+    }
+    setForm(f => ({ ...f, reps: '', rir: '', is_warmup: false, notes: '' }))
   }
 
   // target sets/reps from program if available
@@ -222,13 +232,15 @@ function ExerciseBlock({ se, suggestion, onLogSet, onDeleteSet }) {
           <div className="space-y-1">
             {se.sets.map(s => (
               <div key={s.id} className="flex items-center justify-between text-sm px-2 py-1.5 bg-gray-800 rounded">
-                <span className="text-gray-400 w-12">Set {s.set_number}</span>
+                <span className="text-gray-400 w-12">
+                  Set {s.set_number}{s.is_warmup ? ' ·W' : ''}
+                </span>
                 <div className="flex-1 text-center">
                   <div>
-                    {isUnilateral
-                      ? `L ${s.weight_kg_left}kg / R ${s.weight_kg_right}kg`
-                      : `${s.weight_kg}kg`
-                    } × {s.reps} @ RIR {s.rir}
+                    {s.side !== 'both' && (
+                      <span className="text-gray-500 mr-1">{s.side === 'left' ? 'L' : 'R'}</span>
+                    )}
+                    {s.weight_kg}kg × {s.reps} @ RIR {s.rir}
                   </div>
                   {s.notes && <div className="text-[10px] text-gray-500 italic mt-0.5">"{s.notes}"</div>}
                 </div>
@@ -258,7 +270,10 @@ function ExerciseBlock({ se, suggestion, onLogSet, onDeleteSet }) {
                   <p className="text-blue-400 font-medium mb-1 flex items-center gap-1">🕒 Last time</p>
                   <div className="space-y-0.5 text-gray-300">
                     {suggestion.last_session.sets.map(s => (
-                      <p key={s.id}>{s.weight_kg || s.weight_kg_left || 0}kg × {s.reps}</p>
+                      <p key={s.id}>
+                        {s.side !== 'both' ? `${s.side === 'left' ? 'L' : 'R'} ` : ''}
+                        {s.weight_kg || 0}kg × {s.reps}
+                      </p>
                     ))}
                   </div>
                   <p className="text-gray-500 text-[10px] mt-0.5">{suggestion.last_session.date}</p>
@@ -310,6 +325,14 @@ function ExerciseBlock({ se, suggestion, onLogSet, onDeleteSet }) {
               onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
               className="bg-gray-800 border-gray-700 flex-1 min-w-[140px]"
             />
+            <label className="flex items-center gap-1 text-xs text-gray-400 select-none">
+              <input
+                type="checkbox"
+                checked={form.is_warmup}
+                onChange={e => setForm(f => ({ ...f, is_warmup: e.target.checked }))}
+              />
+              Warm-up
+            </label>
             <Button onClick={handleLog}>Log set</Button>
           </div>
         </div>
