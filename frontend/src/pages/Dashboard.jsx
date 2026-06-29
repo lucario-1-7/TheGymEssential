@@ -120,7 +120,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-medium">Dashboard</h2>
         <Button onClick={startSession}>Start session</Button>
       </div>
@@ -204,7 +204,7 @@ export default function Dashboard() {
 
       {/* Per-muscle volume tracker */}
       <Card className="bg-gray-900 border-gray-800">
-        <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
+        <CardHeader className="pb-2 flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
           <CardTitle className="text-base">Volume by muscle</CardTitle>
           <div className="flex gap-1">
             {VOLUME_PERIODS.map(p => (
