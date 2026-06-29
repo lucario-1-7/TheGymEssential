@@ -5,6 +5,8 @@ import { useUserId } from '../auth/AuthContext'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import Popup from '../components/Popup'
+import excitedHappy from '../assets/excited-happy.png'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
@@ -16,6 +18,7 @@ export default function Session() {
   const [showExercisePicker, setShowExercisePicker] = useState(false)
   const [search, setSearch] = useState('')
   const [suggestion, setSuggestion] = useState({})
+  const [showPr, setShowPr] = useState(false)
 
   useEffect(() => {
     get(`/sessions/detail/${sessionId}`).then(async (s) => {
@@ -81,6 +84,8 @@ export default function Session() {
   }
 
   async function logSet(sessionExerciseId, exerciseId, setData) {
+    // Best weight before this set — used to detect a new PR.
+    const prevPr = suggestion[exerciseId]?.pr?.weight_kg ?? null
     const newSet = await post(`/sessions/exercises/${sessionExerciseId}/sets`, setData)
     setSession(prev => ({
       ...prev,
@@ -90,6 +95,10 @@ export default function Session() {
           : se
       ),
     }))
+    // Celebrate a new weight PR: a working set heavier than the previous best.
+    if (!setData.is_warmup && setData.weight_kg != null && (prevPr == null || setData.weight_kg > prevPr)) {
+      setShowPr(true)
+    }
     const sg = await get(`/sessions/${USER_ID}/suggestions/${exerciseId}`)
     setSuggestion(prev => ({ ...prev, [exerciseId]: sg }))
   }
@@ -166,6 +175,11 @@ export default function Session() {
           />
         ))}
       </div>
+
+      <Popup show={showPr} onClose={() => setShowPr(false)}>
+        <img src={excitedHappy} alt="" className="w-12 h-12" />
+        <p className="text-sm font-bold text-yellow-300">You hit your PR! Well done bro!</p>
+      </Popup>
     </div>
   )
 }
@@ -281,7 +295,6 @@ function ExerciseBlock({ se, suggestion, onLogSet, onDeleteSet }) {
                 ? 'bg-green-950/20 border-green-900/40 text-green-400'
                 : 'bg-blue-950/20 border-blue-900/40 text-blue-300'
             }`}>
-              {suggestion.double_progression.level === 'add' ? '⬆️ ' : '💡 '}
               {suggestion.double_progression.message}
             </div>
           )}
@@ -289,14 +302,14 @@ function ExerciseBlock({ se, suggestion, onLogSet, onDeleteSet }) {
             <div className={`grid gap-2 text-xs ${suggestion?.pr && suggestion?.last_session ? 'grid-cols-2' : 'grid-cols-1'}`}>
               {suggestion.pr && (
                 <div className="bg-yellow-950/10 p-2 rounded border border-yellow-900/30">
-                  <p className="text-yellow-500 font-medium mb-1 flex items-center gap-1">🥇 PR</p>
+                  <p className="text-yellow-500 font-medium mb-1 flex items-center gap-1">PR</p>
                   <p className="text-gray-300 font-medium">{suggestion.pr.weight_kg}kg × {suggestion.pr.reps}</p>
                   <p className="text-gray-500 text-[10px] mt-0.5">{suggestion.pr.date}</p>
                 </div>
               )}
               {suggestion.last_session && (
                 <div className="bg-blue-950/10 p-2 rounded border border-blue-900/30">
-                  <p className="text-blue-400 font-medium mb-1 flex items-center gap-1">🕒 Last time</p>
+                  <p className="text-blue-400 font-medium mb-1 flex items-center gap-1">Last time</p>
                   <div className="space-y-0.5 text-gray-300">
                     {suggestion.last_session.sets.map(s => (
                       <p key={s.id}>

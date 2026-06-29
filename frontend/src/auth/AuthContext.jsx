@@ -25,6 +25,19 @@ export function AuthProvider({ children }) {
     persist(await post('/auth/register', { username, password }))
   }
 
+  async function changePassword(currentPassword, newPassword) {
+    // Server bumps token_version (logging out other devices) and returns a fresh
+    // token for this device so we stay logged in here.
+    const data = await post('/auth/change-password', { current_password: currentPassword, new_password: newPassword })
+    localStorage.setItem('token', data.access_token)
+    setToken(data.access_token)
+  }
+
+  async function logoutEverywhere() {
+    try { await post('/auth/logout-all', {}) } catch { /* token already invalid is fine */ }
+    logout()
+  }
+
   function logout() {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
@@ -33,7 +46,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ token, user, login, register, logout }}>
+    <AuthContext.Provider value={{ token, user, login, register, changePassword, logoutEverywhere, logout }}>
       {children}
     </AuthContext.Provider>
   )

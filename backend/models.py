@@ -23,6 +23,9 @@ class User(Base):
     username = Column(String, nullable=True, unique=True, index=True)
     password_hash = Column(String, nullable=True)
     is_admin = Column(Boolean, default=False)
+    # Bumped to invalidate every outstanding token for this user (logout-everywhere,
+    # password change). The current value is embedded in each JWT and checked on auth.
+    token_version = Column(Integer, nullable=False, default=0, server_default="0")
     created_at = Column(DateTime, default=datetime.utcnow)
 
     mesocycles = relationship("Mesocycle", back_populates="user")

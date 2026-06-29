@@ -19,16 +19,16 @@ def verify_password(plain: str, hashed: str) -> bool:
         return False
 
 
-def create_access_token(subject: str) -> str:
+def create_access_token(subject: str, token_version: int = 0) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    payload = {"sub": str(subject), "exp": expire}
+    payload = {"sub": str(subject), "tv": token_version, "exp": expire}
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def decode_access_token(token: str) -> Optional[str]:
-    """Return the subject (user id) if the token is valid, else None."""
+def decode_access_token(token: str) -> Optional[dict]:
+    """Return the token payload if valid, else None. Callers read 'sub' (user id)
+    and 'tv' (token version) from it."""
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload.get("sub")
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except jwt.PyJWTError:
         return None

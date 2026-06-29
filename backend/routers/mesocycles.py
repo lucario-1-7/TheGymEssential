@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from deps import get_db, verify_user
-from models import Mesocycle, Session as WorkoutSession, SessionExercise, SetLog, ExerciseMuscle, UserMuscleVolume
+from deps import get_db, verify_user, get_current_user
+from models import Mesocycle, Session as WorkoutSession, SessionExercise, SetLog, ExerciseMuscle, UserMuscleVolume, User
 from schemas import MesocycleCreate, MesocycleOut, ProgramSummaryOut, MuscleSummary
 from uuid import UUID
 from collections import defaultdict
@@ -32,8 +32,8 @@ def list_mesocycles(user_id: UUID, db: Session = Depends(get_db), _user=Depends(
 
 
 @router.get("/detail/{mesocycle_id}", response_model=MesocycleOut)
-def get_mesocycle(mesocycle_id: UUID, db: Session = Depends(get_db)):
-    meso = db.query(Mesocycle).filter(Mesocycle.id == mesocycle_id).first()
+def get_mesocycle(mesocycle_id: UUID, db: Session = Depends(get_db), current: User = Depends(get_current_user)):
+    meso = db.query(Mesocycle).filter(Mesocycle.id == mesocycle_id, Mesocycle.user_id == current.id).first()
     if not meso:
         raise HTTPException(status_code=404, detail="Mesocycle not found")
     return meso
@@ -42,8 +42,8 @@ def get_mesocycle(mesocycle_id: UUID, db: Session = Depends(get_db)):
 # ─── Program Summary ──────────────────────────────────────────────────────────
 
 @router.get("/detail/{mesocycle_id}/summary", response_model=ProgramSummaryOut)
-def get_program_summary(mesocycle_id: UUID, db: Session = Depends(get_db)):
-    meso = db.query(Mesocycle).filter(Mesocycle.id == mesocycle_id).first()
+def get_program_summary(mesocycle_id: UUID, db: Session = Depends(get_db), current: User = Depends(get_current_user)):
+    meso = db.query(Mesocycle).filter(Mesocycle.id == mesocycle_id, Mesocycle.user_id == current.id).first()
     if not meso:
         raise HTTPException(status_code=404, detail="Mesocycle not found")
 

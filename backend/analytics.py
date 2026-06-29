@@ -57,7 +57,7 @@ def double_progression_cue(sets, target_reps_max: Optional[int]) -> Optional[dic
     if any(s.reps >= target_reps_max for s in working):
         return {
             "level": "add",
-            "message": f"Add weight — you hit the top of your rep range ({target_reps_max}) last time.",
+            "message": f"Add weight next session!! You hit the top of your rep range({target_reps_max}) last time.",
         }
     if any((s.reps + s.rir) >= target_reps_max for s in working):
         return {

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session as DBSession
-from deps import get_db, verify_user
-from models import Session, SessionExercise, SetLog, Exercise
+from deps import get_db, verify_user, get_current_user
+from models import Session, SessionExercise, SetLog, Exercise, User
 from schemas import (
     SessionCreate, SessionOut, SessionDetailOut,
     SessionExerciseCreate, SessionExerciseOut,
@@ -74,16 +74,16 @@ def last_performance(user_id: UUID, exercise_id: UUID, db: DBSession = Depends(g
 
 
 @router.get("/detail/{session_id}", response_model=SessionDetailOut)
-def get_session(session_id: UUID, db: DBSession = Depends(get_db)):
-    session = db.query(Session).filter(Session.id == session_id).first()
+def get_session(session_id: UUID, db: DBSession = Depends(get_db), current: User = Depends(get_current_user)):
+    session = db.query(Session).filter(Session.id == session_id, Session.user_id == current.id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     return session
 
 
 @router.patch("/detail/{session_id}")
-def update_session(session_id: UUID, body: SessionCreate, db: DBSession = Depends(get_db)):
-    session = db.query(Session).filter(Session.id == session_id).first()
+def update_session(session_id: UUID, body: SessionCreate, db: DBSession = Depends(get_db), current: User = Depends(get_current_user)):
+    session = db.query(Session).filter(Session.id == session_id, Session.user_id == current.id).first()
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     session.session_rpe = body.session_rpe
@@ -99,8 +99,12 @@ def update_session(session_id: UUID, body: SessionCreate, db: DBSession = Depend
 def add_exercise_to_session(
     session_id: UUID,
     body: SessionExerciseCreate,
-    db: DBSession = Depends(get_db)
+    db: DBSession = Depends(get_db),
+    current: User = Depends(get_current_user),
 ):
+    owned = db.query(Session).filter(Session.id == session_id, Session.user_id == current.id).first()
+    if not owned:
+        raise HTTPException(status_code=404, detail="Session not found")
     se = SessionExercise(
         session_id=session_id,
         exercise_id=body.exercise_id,
@@ -122,9 +126,15 @@ def add_exercise_to_session(
 def log_set(
     session_exercise_id: UUID,
     body: SetCreate,
-    db: DBSession = Depends(get_db)
+    db: DBSession = Depends(get_db),
+    current: User = Depends(get_current_user),
 ):
-    se = db.query(SessionExercise).filter(SessionExercise.id == session_exercise_id).first()
+    se = (
+        db.query(SessionExercise)
+        .join(Session)
+        .filter(SessionExercise.id == session_exercise_id, Session.user_id == current.id)
+        .first()
+    )
     if not se:
         raise HTTPException(status_code=404, detail="Session exercise not found")
 
@@ -145,8 +155,14 @@ def log_set(
 
 
 @router.delete("/sets/{set_id}")
-def delete_set(set_id: UUID, db: DBSession = Depends(get_db)):
-    s = db.query(SetLog).filter(SetLog.id == set_id).first()
+def delete_set(set_id: UUID, db: DBSession = Depends(get_db), current: User = Depends(get_current_user)):
+    s = (
+        db.query(SetLog)
+        .join(SessionExercise)
+        .join(Session)
+        .filter(SetLog.id == set_id, Session.user_id == current.id)
+        .first()
+    )
     if not s:
         raise HTTPException(status_code=404, detail="Set not found")
     db.delete(s)

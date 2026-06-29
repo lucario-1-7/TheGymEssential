@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from deps import get_db, verify_user
-from models import Program, ProgramDay, ProgramExercise
+from deps import get_db, verify_user, get_current_user
+from models import Program, ProgramDay, ProgramExercise, User
 from schemas import ProgramCreate, ProgramOut, ProgramDayOut
 from uuid import UUID
 from datetime import datetime
@@ -90,8 +90,8 @@ def list_programs(user_id: UUID, db: Session = Depends(get_db), _user=Depends(ve
     return db.query(Program).filter(Program.user_id == user_id).order_by(Program.name).all()
 
 @router.delete("/{program_id}")
-def delete_program(program_id: UUID, db: Session = Depends(get_db)):
-    program = db.query(Program).filter(Program.id == program_id).first()
+def delete_program(program_id: UUID, db: Session = Depends(get_db), current: User = Depends(get_current_user)):
+    program = db.query(Program).filter(Program.id == program_id, Program.user_id == current.id).first()
     if not program:
         raise HTTPException(status_code=404, detail="Program not found")
     db.delete(program)

@@ -27,16 +27,20 @@ def get_current_user(
     """Resolve the user from the Bearer token, or 401."""
     if creds is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    sub = decode_access_token(creds.credentials)
-    if not sub:
+    payload = decode_access_token(creds.credentials)
+    if not payload:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
     try:
-        uid = UUID(sub)
-    except ValueError:
+        uid = UUID(payload.get("sub"))
+    except (ValueError, TypeError):
         raise HTTPException(status_code=401, detail="Invalid token subject")
     user = db.query(User).filter(User.id == uid).first()
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
+    # A bumped token_version (logout-everywhere / password change) invalidates
+    # every token issued before the bump.
+    if payload.get("tv") != user.token_version:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
     return user
 
 

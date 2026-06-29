@@ -42,6 +42,7 @@ export default function Bodyweight() {
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-medium">Bodyweight</h2>
+      <p className="text-sm text-gray-400">Try logging your weight first thing in the morning!</p>
 
       <Card className="bg-gray-900 border-gray-800">
         <CardContent className="pt-4 flex flex-wrap items-end gap-3">

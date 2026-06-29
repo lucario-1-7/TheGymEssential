@@ -64,7 +64,7 @@ export default function Progress() {
             </Card>
             <Card className="bg-gray-900 border-gray-800">
               <CardContent className="pt-4">
-                <p className="text-xs text-gray-500 uppercase tracking-wide">🥇 PR</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">PR</p>
                 {data.pr
                   ? <p className="text-2xl font-medium">{data.pr.weight_kg}<span className="text-sm text-gray-500">kg × {data.pr.reps}</span></p>
                   : <p className="text-gray-500">—</p>}
@@ -115,7 +115,7 @@ function PlateauCard({ plateau }) {
       : 'border-green-900/40 text-green-400'
   const heading = plateau.status === 'insufficient_data'
     ? 'Trend'
-    : plateau.is_plateaued ? '⚠️ Plateau' : '📈 Progressing'
+    : plateau.is_plateaued ? 'Plateau' : 'Progressing'
   return (
     <Card className={`bg-gray-900 ${tone}`}>
       <CardContent className="pt-4">
