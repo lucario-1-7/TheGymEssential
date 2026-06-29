@@ -1,6 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { useAuth } from './auth/AuthContext'
-import Login from './pages/Login'
+import { Routes, Route } from 'react-router-dom'
 import Dashboard from './pages/Dashboard'
 import Exercises from './pages/Exercises'
 import Session from './pages/Session'
@@ -12,21 +10,8 @@ import History from './pages/History'
 import Outlines from './pages/Outlines'
 
 function App() {
-  const { token } = useAuth()
-
-  // Not logged in → only the login page is reachable.
-  if (!token) {
-    return (
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    )
-  }
-
   return (
     <Routes>
-      <Route path="/login" element={<Navigate to="/" replace />} />
       <Route path="/" element={<Layout />}>
         <Route index element={<Dashboard />} />
         <Route path="exercises" element={<Exercises />} />
