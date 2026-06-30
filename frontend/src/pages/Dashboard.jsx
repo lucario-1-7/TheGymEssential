@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'motion/react'
 import { get, post } from '../api/index.js'
 import { useUserId } from '../auth/AuthContext'
 import { Button } from '../components/ui/button'
@@ -165,9 +166,11 @@ export default function Dashboard() {
                         <span className="tnum text-muted-foreground">{m.sets}</span>
                       </div>
                       <div className="h-2.5 overflow-hidden rounded-full bg-muted">
-                        <div
+                        <motion.div
                           className="h-full rounded-full bg-primary"
-                          style={{ width: max ? `${(m.sets / max) * 100}%` : '0%' }}
+                          initial={{ width: 0 }}
+                          animate={{ width: max ? `${(m.sets / max) * 100}%` : '0%' }}
+                          transition={{ duration: 0.35, ease: 'easeOut' }}
                         />
                       </div>
                     </div>

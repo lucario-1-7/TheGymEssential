@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
+import { motion } from 'motion/react'
 import {
   Home, History, LineChart, MoreHorizontal, X,
   Dumbbell, ListChecks, Scale, ClipboardList, CloudUpload,
@@ -68,7 +69,16 @@ export default function Layout() {
       </header>
 
       <main className="min-w-0 flex-1 p-4 pb-24 md:p-8 md:pb-8">
-        <Outlet />
+        {/* Fast fade/slide on route change. Keyed by path so each page re-enters;
+            no exit animation keeps navigation snappy. */}
+        <motion.div
+          key={pathname}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.15, ease: 'easeOut' }}
+        >
+          <Outlet />
+        </motion.div>
       </main>
 
       {/* Mobile bottom tab bar */}

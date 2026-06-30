@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
+import { MotionConfig } from 'motion/react'
 import Dashboard from './pages/Dashboard'
 import Exercises from './pages/Exercises'
 import Session from './pages/Session'
@@ -13,7 +14,7 @@ import Onboarding from './components/Onboarding'
 
 function App() {
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       <Onboarding />
       <Routes>
         <Route path="/" element={<Layout />}>
@@ -28,7 +29,7 @@ function App() {
         <Route path="backup" element={<Backup />} />
         </Route>
       </Routes>
-    </>
+    </MotionConfig>
   )
 }
 
