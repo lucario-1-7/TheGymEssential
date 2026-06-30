@@ -1,5 +1,10 @@
 {
   "appId": "com.thegymessential.app",
   "appName": "TheGymEssential",
-  "webDir": "dist"
+  "webDir": "dist",
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
 }
