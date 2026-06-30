@@ -1,209 +1,66 @@
 # TheGymEssential
 
-A science-based workout tracker built for serious lifters. Tracks progressive overload using RIR (Reps in Reserve), suggests next session weights automatically, monitors weekly volume per muscle group against MEV/MAV/MRV landmarks, and organises training around structured weekly programs.
-
+A local-first workout logger built around one idea: progressive overload. Log your
+sets, see what you lifted last time, and track volume and strength over time. No
+account, no server, no subscription. Your data stays on your device and you can back
+it up to your own Google Drive.
 
 ## Features
 
-- **Weekly program builder** — create programs with custom exercises per day, set target sets and rep ranges, mark rest days, and set a program as active
-- **Auto-populated sessions** — when you start a session, exercises are pulled from your active program for that day automatically
-- **Weight suggestion engine** — after each session, the app suggests next week's weight per exercise based on your RIR
-- **Volume tracking** — tracks sets per muscle group per week and compares against your personal MEV/MAV/MRV landmarks
-- **Unilateral exercise support** — tracks left and right side weights independently
-- **Mesocycle planner** — organise training into blocks with a program summary showing muscle frequency and volume status
-- **Bodyweight logging** — tracks bodyweight over time
-- **Exercise library** — build your own exercise list with muscle group targeting, movement pattern, and equipment
+- **Session logging** with planned-vs-actual sets, warm-up and unilateral (left/right) tracking, and RIR/RPE.
+- **Workout programs and outlines** with a weekly schedule and per-exercise targets.
+- **Last-time reference** on the dashboard so you know what to beat this session.
+- **Progress charts** per exercise (estimated 1RM and more) with plateau detection, powered by Recharts.
+- **Per-muscle volume tracker** for the week or all time.
+- **Bodyweight tracking** with a trend chart.
+- **Missed-session prompts** to keep you honest about skipped training days.
+- **Google Drive backup and restore**, versioned (last 10 kept) in a private app folder, with a first-launch restore-or-start-fresh screen.
+- **Dark UI** with a near-black theme and a single violet accent, a desktop sidebar, and a mobile bottom tab bar.
 
----
+## Tech
 
-## Tech Stack
+- React 19 + Vite, React Router
+- Tailwind CSS + shadcn/ui components, Geist font, lucide icons
+- Dexie (IndexedDB) as the on-device store, so the app runs fully offline
+- Recharts for charts, Motion (Framer Motion) for light transitions
+- Capacitor for the Android build
 
-**Frontend**
-- React + Vite
-- Tailwind CSS v4
-- Shadcn/ui components
-- Recharts
-- React Router
+The app is local-first: `frontend/src/api` dispatches to an on-device store in
+`frontend/src/local` (Dexie/IndexedDB) rather than a server, so there is no auth and
+no network dependency. A FastAPI + Postgres backend still lives in `backend/` from an
+earlier version but is deprecated and unused.
 
-**Backend**
-- Python + FastAPI
-- SQLAlchemy ORM
-- PostgreSQL
-- Alembic (migrations)
-- Pydantic v2
-
----
-
-## Project Structure
-
-```
-TheGymEssential/
-├── backend/
-│   ├── main.py              # FastAPI app entry point
-│   ├── models.py            # SQLAlchemy database models
-│   ├── schemas.py           # Pydantic request/response schemas
-│   ├── database.py          # DB engine, session, seed script
-│   ├── deps.py              # Dependency injection
-│   ├── requirements.txt
-│   ├── .env                 # DATABASE_URL
-│   └── routers/
-│       ├── users.py         # User, bodyweight, volume landmarks
-│       ├── exercises.py     # Exercise library
-│       ├── sessions.py      # Workout sessions, sets, suggestions
-│       ├── mesocycles.py    # Mesocycles, program summary
-│       └── programs.py      # Weekly programs
-│
-└── frontend/
-    └── src/
-        ├── App.jsx
-        ├── main.jsx
-        ├── index.css
-        ├── api/
-        │   └── index.js     # All fetch calls to backend
-        ├── components/
-        │   ├── Layout.jsx   # Sidebar + page wrapper
-        │   └── ui/          # Shadcn components
-        └── pages/
-            ├── Dashboard.jsx
-            ├── Workouts.jsx
-            ├── Exercises.jsx
-            ├── Session.jsx
-            ├── Mesocycles.jsx
-            └── Summary.jsx
-```
-
----
-
-## Getting Started
-
-### Prerequisites
-
-- Python 3.10+
-- Node.js 18+
-- PostgreSQL
-
-### 1. Clone the repo
-
-```bash
-git clone https://github.com/yourusername/TheGymEssential.git
-cd TheGymEssential
-```
-
-### 2. Backend setup
-
-```bash
-cd backend
-
-# Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate        # Mac/Linux
-venv\Scripts\activate           # Windows
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Create the database
-createdb fitness_tracker
-
-# Set up environment variables
-# Edit .env and set your database URL:
-# DATABASE_URL=postgresql://localhost/fitness_tracker
-
-# Initialise tables and seed muscle groups
-python database.py
-
-# Start the backend
-uvicorn main:app --reload
-```
-
-API docs available at `http://localhost:8000/docs`
-
-### 3. Frontend setup
+## Getting started
 
 ```bash
 cd frontend
 npm install
-npm run dev
+npm run dev      # start the dev server at http://localhost:5173
+npm run build    # production build into dist/
 ```
 
-App runs at `http://localhost:5173`
+### Google Drive backup (optional)
 
-### 4. Create your user
+Backup uses an in-app Google sign-in scoped to `drive.appdata` only, so the app can
+see just its own backup folder and nothing else in your Drive. To enable it:
 
-Once both servers are running, go to `http://localhost:8000/docs`, find `POST /users/`, and create a user:
+1. In the [Google Cloud Console](https://console.cloud.google.com), create a project and enable the Google Drive API.
+2. Configure the OAuth consent screen (External), add the `https://www.googleapis.com/auth/drive.appdata` scope, and add yourself as a test user.
+3. Create an OAuth client ID of type Web application, with `http://localhost:5173` as an authorized JavaScript origin.
+4. Copy `frontend/.env.example` to `frontend/.env` and set `VITE_GOOGLE_CLIENT_ID` to your client ID.
 
-```json
-{ "name": "your name" }
+The browser and PWA path is wired up. Native Google sign-in for the Android build is
+not connected yet.
+
+## Android (Capacitor)
+
+The Android build targets Capacitor 8 and compiles against JDK 21.
+
+```bash
+cd frontend
+npm run build
+npx cap sync android
+cd android && ./gradlew assembleDebug   # with JDK 21 on JAVA_HOME
 ```
 
-Copy the returned `id` and paste it as `USER_ID` in the following files:
-
-```
-src/pages/Dashboard.jsx
-src/pages/Session.jsx
-src/pages/Workouts.jsx
-```
-
----
-
-## API Overview
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/users/` | Create user |
-| GET | `/users/{id}/volume` | Get MEV/MAV/MRV per muscle |
-| PATCH | `/users/{id}/volume/{muscle_id}` | Update volume landmarks |
-| POST | `/users/{id}/bodyweight` | Log bodyweight |
-| GET | `/exercises/` | List exercises |
-| POST | `/exercises/` | Create exercise |
-| GET | `/exercises/muscle-groups` | List muscle groups |
-| POST | `/sessions/{user_id}` | Start session |
-| POST | `/sessions/detail/{id}/exercises` | Add exercise to session |
-| POST | `/sessions/exercises/{id}/sets` | Log a set |
-| GET | `/sessions/{user_id}/suggestions/{exercise_id}` | Get weight suggestion |
-| POST | `/programs/{user_id}` | Create weekly program |
-| GET | `/programs/{user_id}/today` | Get today's workout from active program |
-| PATCH | `/programs/{user_id}/activate/{program_id}` | Set active program |
-| POST | `/mesocycles/{user_id}` | Create mesocycle |
-| GET | `/mesocycles/detail/{id}/summary` | Program summary with volume status |
-
----
-
-## Weight Suggestion Logic
-
-After each session, the app computes a suggested weight for the next session based on average RIR across working sets:
-
-| Average RIR | Action |
-|-------------|--------|
-| 3+ | Add weight |
-| 1–2 | Same weight, aim for more reps |
-| 0 | Consolidate before progressing |
-| Missed reps | Drop weight slightly |
-
-Weight increments per movement pattern:
-- Upper body compounds → +2.5kg
-- Lower body compounds → +5.0kg
-- Isolation / unilateral → +1.25kg
-
----
-
-## Volume Landmarks
-
-Each muscle group has personal MEV/MAV/MRV values (sets per week) that default to research-based values and can be overridden per user. The program summary uses these to flag whether a muscle is undertrained, optimally trained, or overtrained.
-
-| Status | Meaning |
-|--------|---------|
-| `below_mev` | Below minimum effective volume |
-| `in_mav` | In the optimal adaptive range |
-| `above_mrv` | Exceeding maximum recoverable volume |
-
----
-
-## Roadmap
-
-- [ ] Authentication
-- [ ] Mobile support
-- [ ] Progress charts per exercise
-- [ ] Plateau detection
-- [ ] Mesocycle-aware volume progression
-- [ ] Bilateral asymmetry tracker
+The resulting APK is at `frontend/android/app/build/outputs/apk/debug/app-debug.apk`.
