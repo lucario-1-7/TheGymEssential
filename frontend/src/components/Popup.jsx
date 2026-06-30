@@ -16,8 +16,8 @@ export default function Popup({ show, onClose, duration = 5000, children }) {
   if (!show) return null
 
   return (
-    <div className="fixed inset-x-0 bottom-6 z-50 flex justify-center px-4 pointer-events-none">
-      <div className="pointer-events-auto flex items-center gap-3 rounded-xl border border-yellow-700/50 bg-gray-900 px-5 py-4 shadow-xl">
+    <div className="pointer-events-none fixed inset-x-0 bottom-24 z-[55] flex justify-center px-4 md:bottom-6">
+      <div className="pointer-events-auto flex items-center gap-3 rounded-xl border border-border bg-card px-5 py-4 shadow-xl">
         {children}
       </div>
     </div>

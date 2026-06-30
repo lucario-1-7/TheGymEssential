@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { restoreFromDrive } from '../lib/driveBackup'
 import { hasUserData } from '../local/db'
+import { Button } from './ui/button'
 
 const KEY = 'tge.onboarded'
 
@@ -40,32 +41,24 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-gray-950 p-6">
-      <div className="w-full max-w-md rounded-xl border border-gray-800 bg-gray-900 p-6">
-        <h1 className="text-xl font-medium text-white">Welcome to TheGymEssential</h1>
-        <p className="mt-2 text-sm text-gray-400">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-background p-6">
+      <div className="w-full max-w-md rounded-xl border border-border bg-card p-6">
+        <h1 className="text-xl font-medium">Welcome to TheGymEssential</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           Your data is stored on this device. If you have a Google Drive backup from
-          another device, you can restore it now — otherwise just start fresh.
+          another device, you can restore it now, otherwise just start fresh.
         </p>
 
         <div className="mt-6 flex flex-col gap-3">
-          <button
-            onClick={handleRestore}
-            disabled={busy}
-            className="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-200 disabled:opacity-50"
-          >
+          <Button onClick={handleRestore} disabled={busy}>
             {busy ? 'Restoring...' : 'Restore from Google Drive'}
-          </button>
-          <button
-            onClick={finish}
-            disabled={busy}
-            className="rounded-md border border-gray-700 px-4 py-2 text-sm font-medium text-gray-200 transition-colors hover:bg-gray-800 disabled:opacity-50"
-          >
+          </Button>
+          <Button variant="outline" onClick={finish} disabled={busy}>
             Start fresh
-          </button>
+          </Button>
         </div>
 
-        {error && <p className="mt-4 text-sm text-red-400">{error}</p>}
+        {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
       </div>
     </div>
   )

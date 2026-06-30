@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { backupToDrive, restoreFromDrive, getBackupInfo } from '../lib/driveBackup'
+import { Button } from '../components/ui/button'
 import Popup from '../components/Popup'
 
-// Drive backup screen: one backup file per account in the hidden appData folder.
-// Backup is safe; restore is destructive (it replaces all local data), so it asks
-// for confirmation first.
+// Drive backup screen: versioned backups in the hidden appData folder. Backup is
+// safe; restore is destructive (it replaces all local data), so it confirms first.
 export default function Backup() {
   const [info, setInfo] = useState(null)      // { latest, count } | null
   const [checking, setChecking] = useState(false)
@@ -58,13 +58,13 @@ export default function Backup() {
   return (
     <div className="mx-auto max-w-xl">
       <h1 className="mb-1 text-2xl font-medium">Backup &amp; Restore</h1>
-      <p className="mb-6 text-sm text-gray-400">
+      <p className="mb-6 text-sm text-muted-foreground">
         Your data lives on this device. Back it up to a private folder in your Google
         Drive so you can recover it on a new phone.
       </p>
 
-      <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
-        <p className="text-sm text-gray-400">
+      <div className="rounded-xl border border-border bg-card p-5">
+        <p className="text-sm text-muted-foreground">
           {checking
             ? 'Checking Drive...'
             : last
@@ -73,49 +73,30 @@ export default function Backup() {
         </p>
 
         <div className="mt-5 flex flex-wrap gap-3">
-          <button
-            onClick={handleBackup}
-            disabled={busy !== null}
-            className="rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-200 disabled:opacity-50"
-          >
+          <Button onClick={handleBackup} disabled={busy !== null}>
             {busy === 'backup' ? 'Backing up...' : 'Back up now'}
-          </button>
-
-          <button
-            onClick={() => setConfirming(true)}
-            disabled={busy !== null}
-            className="rounded-md border border-gray-700 px-4 py-2 text-sm font-medium text-gray-200 transition-colors hover:bg-gray-800 disabled:opacity-50"
-          >
+          </Button>
+          <Button variant="outline" onClick={() => setConfirming(true)} disabled={busy !== null}>
             {busy === 'restore' ? 'Restoring...' : 'Restore from Drive'}
-          </button>
+          </Button>
         </div>
 
         {confirming && (
-          <div className="mt-5 rounded-md border border-yellow-700/50 bg-gray-950 p-4">
-            <p className="text-sm text-gray-300">
+          <div className="mt-5 rounded-md border border-destructive/40 bg-background p-4">
+            <p className="text-sm text-muted-foreground">
               Restoring replaces everything currently on this device with the data from
               your latest Drive backup. This cannot be undone.
             </p>
             <div className="mt-4 flex gap-3">
-              <button
-                onClick={handleRestore}
-                className="rounded-md bg-yellow-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-yellow-500"
-              >
-                Replace my data
-              </button>
-              <button
-                onClick={() => setConfirming(false)}
-                className="rounded-md border border-gray-700 px-4 py-2 text-sm text-gray-300 transition-colors hover:bg-gray-800"
-              >
-                Cancel
-              </button>
+              <Button variant="destructive" onClick={handleRestore}>Replace my data</Button>
+              <Button variant="outline" onClick={() => setConfirming(false)}>Cancel</Button>
             </div>
           </div>
         )}
       </div>
 
       <Popup show={!!popup} onClose={() => setPopup('')}>
-        <span className="text-sm text-gray-100">{popup}</span>
+        <span className="text-sm text-foreground">{popup}</span>
       </Popup>
     </div>
   )

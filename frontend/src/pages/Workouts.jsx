@@ -66,10 +66,10 @@ export default function Workouts() {
 
       <div className="space-y-3">
         {programs.length === 0 && !showCreate && (
-          <p className="text-sm text-gray-500">No programs yet. Create one above.</p>
+          <p className="text-sm text-muted-foreground">No programs yet. Create one above.</p>
         )}
         {programs.map(p => (
-          <Card key={p.id} className="bg-gray-900 border-gray-800">
+          <Card key={p.id}>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
@@ -92,7 +92,7 @@ export default function Workouts() {
                   <Button
                     size="sm"
                     variant="ghost"
-                    className="text-gray-500 hover:text-red-400"
+                    className="text-muted-foreground hover:text-red-400"
                     onClick={() => handleDelete(p.id)}
                   >
                     Delete
@@ -106,10 +106,10 @@ export default function Workouts() {
                   const pd = p.days.find(d => d.day_of_week === i)
                   return (
                     <div key={day} className="text-center">
-                      <p className="text-xs text-gray-500 mb-1">{day.slice(0, 3)}</p>
+                      <p className="text-xs text-muted-foreground mb-1">{day.slice(0, 3)}</p>
                       <div className={`text-xs rounded p-1 ${!pd || pd.is_rest
-                          ? 'bg-gray-800 text-gray-600'
-                          : 'bg-gray-700 text-white'
+                          ? 'bg-secondary text-muted-foreground'
+                          : 'bg-muted text-foreground'
                         }`}>
                         {!pd || pd.is_rest ? 'Rest' : (pd.label || 'Training')}
                       </div>
@@ -212,7 +212,7 @@ function ProgramBuilder({ exercises, onSave, initialProgram, onCancel }) {
   const currentDay = days[activeDay]
 
   return (
-    <Card className="bg-gray-900 border-gray-800">
+    <Card>
       <CardHeader>
         <CardTitle className="text-base">Create program</CardTitle>
       </CardHeader>
@@ -222,7 +222,7 @@ function ProgramBuilder({ exercises, onSave, initialProgram, onCancel }) {
           placeholder="Program name e.g. PPL, Upper Lower"
           value={name}
           onChange={e => setName(e.target.value)}
-          className="bg-gray-800 border-gray-700"
+          className="bg-secondary border-border"
         />
 
         {/* Day tabs */}
@@ -232,15 +232,15 @@ function ProgramBuilder({ exercises, onSave, initialProgram, onCancel }) {
               key={day}
               onClick={() => setActiveDay(i)}
               className={`px-3 py-1.5 rounded-md text-xs transition-colors ${activeDay === i
-                  ? 'bg-white text-gray-900'
+                  ? 'bg-primary text-primary-foreground'
                   : days[i].is_rest
-                    ? 'bg-gray-800 text-gray-500'
-                    : 'bg-gray-700 text-white'
+                    ? 'bg-secondary text-muted-foreground'
+                    : 'bg-muted text-foreground'
                 }`}
             >
               {day.slice(0, 3)}
               {!days[i].is_rest && days[i].exercises.length > 0 && (
-                <span className="ml-1 text-gray-400">({days[i].exercises.length})</span>
+                <span className="ml-1 text-muted-foreground">({days[i].exercises.length})</span>
               )}
             </button>
           ))}
@@ -250,7 +250,7 @@ function ProgramBuilder({ exercises, onSave, initialProgram, onCancel }) {
         <div className="space-y-4">
           <div className="flex items-center gap-4">
             <h3 className="text-sm font-medium">{DAYS[activeDay]}</h3>
-            <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
               <input
                 type="checkbox"
                 checked={currentDay.is_rest}
@@ -266,39 +266,39 @@ function ProgramBuilder({ exercises, onSave, initialProgram, onCancel }) {
                 placeholder="Label e.g. Push, Pull, Legs, Upper"
                 value={currentDay.label}
                 onChange={e => setLabel(activeDay, e.target.value)}
-                className="bg-gray-800 border-gray-700"
+                className="bg-secondary border-border"
               />
 
               {/* Exercises for this day */}
               <div className="space-y-2">
                 {currentDay.exercises.map((ex, j) => (
-                  <div key={j} className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2">
+                  <div key={j} className="flex items-center gap-2 bg-secondary rounded-lg px-3 py-2">
                     <span className="text-sm flex-1">{ex.exercise_name}</span>
-                    <div className="flex items-center gap-1 text-xs text-gray-400">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <span>Sets</span>
                       <Input
                         value={ex.target_sets}
                         onChange={e => updateExerciseField(activeDay, j, 'target_sets', e.target.value)}
-                        className="bg-gray-700 border-gray-600 w-12 h-7 text-center px-1 text-xs"
+                        className="bg-muted border-border w-12 h-7 text-center px-1 text-xs"
                       />
                       <span>Reps</span>
                       <Input
                         value={ex.target_reps_min}
                         onChange={e => updateExerciseField(activeDay, j, 'target_reps_min', e.target.value)}
-                        className="bg-gray-700 border-gray-600 w-12 h-7 text-center px-1 text-xs"
+                        className="bg-muted border-border w-12 h-7 text-center px-1 text-xs"
                       />
-                      <span>–</span>
+                      <span>-</span>
                       <Input
                         value={ex.target_reps_max}
                         onChange={e => updateExerciseField(activeDay, j, 'target_reps_max', e.target.value)}
-                        className="bg-gray-700 border-gray-600 w-12 h-7 text-center px-1 text-xs"
+                        className="bg-muted border-border w-12 h-7 text-center px-1 text-xs"
                       />
                     </div>
                     <button
                       onClick={() => removeExercise(activeDay, j)}
-                      className="text-gray-600 hover:text-red-400 text-xs ml-1"
+                      className="text-muted-foreground hover:text-red-400 text-xs ml-1"
                     >
-                      ✕
+                      x
                     </button>
                   </div>
                 ))}
@@ -333,12 +333,12 @@ function ExercisePicker({ exercises, onSelect }) {
     ex.name.toLowerCase().includes(search.toLowerCase())
   )
   return (
-    <div className="bg-gray-800 rounded-lg p-2 space-y-2">
+    <div className="bg-secondary rounded-lg p-2 space-y-2">
       <Input
         placeholder="Search exercises..."
         value={search}
         onChange={e => setSearch(e.target.value)}
-        className="bg-gray-700 border-gray-600 h-8 text-sm"
+        className="bg-muted border-border h-8 text-sm"
         autoFocus
       />
       <div className="space-y-1 max-h-48 overflow-y-auto">
@@ -346,16 +346,16 @@ function ExercisePicker({ exercises, onSelect }) {
           <button
             key={ex.id}
             onClick={() => onSelect(ex)}
-            className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-gray-700 transition-colors"
+            className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors"
           >
             <span className="font-medium">{ex.name}</span>
-            <span className="text-gray-500 ml-2 text-xs">
+            <span className="text-muted-foreground ml-2 text-xs">
               {ex.muscle_targets.filter(m => m.is_primary).map(m => m.muscle_group.name).join(', ')}
             </span>
           </button>
         ))}
         {filtered.length === 0 && (
-          <p className="text-xs text-gray-500 px-3 py-2">No exercises found</p>
+          <p className="text-xs text-muted-foreground px-3 py-2">No exercises found</p>
         )}
       </div>
     </div>

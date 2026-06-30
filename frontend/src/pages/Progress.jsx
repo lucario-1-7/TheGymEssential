@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import TrendChart from '../components/TrendChart'
 
 const METRICS = [
-  { key: 'e1rm',         label: 'Est. 1RM',   unit: 'kg', color: '#60a5fa' },
+  { key: 'e1rm',         label: 'Est. 1RM',   unit: 'kg', color: '#8b5cf6' },
   { key: 'top_weight',   label: 'Top weight', unit: 'kg', color: '#34d399' },
   { key: 'total_volume', label: 'Volume',     unit: 'kg', color: '#f59e0b' },
 ]
@@ -40,35 +40,35 @@ export default function Progress() {
       <select
         value={selected}
         onChange={e => setSelected(e.target.value)}
-        className="bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm w-full max-w-sm"
+        className="bg-secondary border border-border rounded-md px-3 py-2 text-sm w-full max-w-sm"
       >
         {exercises.map(ex => (
           <option key={ex.id} value={ex.id}>{ex.name}</option>
         ))}
       </select>
 
-      {!data && <p className="text-sm text-gray-500">Loading...</p>}
+      {!data && <p className="text-sm text-muted-foreground">Loading...</p>}
 
       {data && !hasData && (
-        <p className="text-sm text-gray-500">No sets logged for this exercise yet.</p>
+        <p className="text-sm text-muted-foreground">No sets logged for this exercise yet.</p>
       )}
 
       {hasData && (
         <>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Card className="bg-gray-900 border-gray-800">
+            <Card>
               <CardContent className="pt-4">
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Best e1RM</p>
-                <p className="text-2xl font-medium">{data.best_e1rm ?? '—'}<span className="text-sm text-gray-500"> kg</span></p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Best e1RM</p>
+                <p className="text-2xl font-medium">{data.best_e1rm ?? '-'}<span className="text-sm text-muted-foreground"> kg</span></p>
               </CardContent>
             </Card>
-            <Card className="bg-gray-900 border-gray-800">
+            <Card>
               <CardContent className="pt-4">
-                <p className="text-xs text-gray-500 uppercase tracking-wide">PR</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">PR</p>
                 {data.pr
-                  ? <p className="text-2xl font-medium">{data.pr.weight_kg}<span className="text-sm text-gray-500">kg × {data.pr.reps}</span></p>
-                  : <p className="text-gray-500">—</p>}
-                {data.pr && <p className="text-[11px] text-gray-500 mt-0.5">{data.pr.date}</p>}
+                  ? <p className="text-2xl font-medium">{data.pr.weight_kg}<span className="text-sm text-muted-foreground">kg × {data.pr.reps}</span></p>
+                  : <p className="text-muted-foreground">-</p>}
+                {data.pr && <p className="text-[11px] text-muted-foreground mt-0.5">{data.pr.date}</p>}
               </CardContent>
             </Card>
             <PlateauCard plateau={data.plateau} />
@@ -80,7 +80,7 @@ export default function Progress() {
                 key={m.key}
                 onClick={() => setMetric(m.key)}
                 className={`px-3 py-1.5 rounded-md text-xs transition-colors ${
-                  metric === m.key ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-800'
+                  metric === m.key ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-secondary'
                 }`}
               >
                 {m.label}
@@ -88,7 +88,7 @@ export default function Progress() {
             ))}
           </div>
 
-          <Card className="bg-gray-900 border-gray-800">
+          <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base">{activeMetric.label} over time</CardTitle>
             </CardHeader>
@@ -109,7 +109,7 @@ export default function Progress() {
 
 function PlateauCard({ plateau }) {
   const tone = plateau.status === 'insufficient_data'
-    ? 'border-gray-800 text-gray-400'
+    ? 'border-border text-muted-foreground'
     : plateau.is_plateaued
       ? 'border-red-900/40 text-red-400'
       : 'border-green-900/40 text-green-400'
@@ -117,10 +117,10 @@ function PlateauCard({ plateau }) {
     ? 'Trend'
     : plateau.is_plateaued ? 'Plateau' : 'Progressing'
   return (
-    <Card className={`bg-gray-900 ${tone}`}>
+    <Card className={tone}>
       <CardContent className="pt-4">
         <p className="text-xs uppercase tracking-wide">{heading}</p>
-        <p className="text-xs mt-1 text-gray-400">{plateau.message}</p>
+        <p className="text-xs mt-1 text-muted-foreground">{plateau.message}</p>
       </CardContent>
     </Card>
   )

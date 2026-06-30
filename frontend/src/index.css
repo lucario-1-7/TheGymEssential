@@ -1,16 +1,49 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Near-black neutral surfaces with a single violet brand accent.
+   The app is dark-only, so the palette lives in :root and <html> carries the
+   `dark` class so shadcn components' dark: variants also apply. Values are HSL
+   channels (no hsl() wrapper) so Tailwind can compose them with opacity. */
 :root {
-  --border: 0 0% 90%;
-  --input: 0 0% 90%;
-  --ring: 0 0% 10%;
-  --background: 0 0% 100%;
-  --foreground: 0 0% 10%;
-  --primary: 0 0% 10%;
-  --secondary: 0 0% 90%;
-  --muted: 0 0% 95%;
-  --accent: 0 0% 90%;
-  --popover: 0 0% 100%;
-  --card: 0 0% 100%;
+  --background: 240 6% 4%;
+  --foreground: 240 6% 96%;
+
+  --card: 240 5% 9%;
+  --card-foreground: 240 6% 96%;
+  --popover: 240 5% 9%;
+  --popover-foreground: 240 6% 96%;
+
+  --primary: 258 90% 66%;
+  --primary-foreground: 240 10% 4%;
+  --secondary: 240 4% 13%;
+  --secondary-foreground: 240 6% 96%;
+  --muted: 240 4% 16%;
+  --muted-foreground: 240 5% 65%;
+  --accent: 240 4% 15%;
+  --accent-foreground: 240 6% 96%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 240 4% 15%;
+  --input: 240 4% 15%;
+  --ring: 258 90% 66%;
+
+  --radius: 0.75rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Align weights/reps/stats in columns wherever numbers are tabular. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
 }

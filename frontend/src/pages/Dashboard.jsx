@@ -31,7 +31,7 @@ export default function Dashboard() {
       .then(async data => {
         const allSessions = Array.isArray(data) ? data : []
         setSessions(allSessions)
-        
+
         const currentDayOfWeek = new Date().getDay()
         const todayStr = new Date().toISOString().split('T')[0]
         const sameDaySession = allSessions.find(s => {
@@ -39,7 +39,7 @@ export default function Dashboard() {
           const sDate = new Date(s.date + 'T12:00:00Z')
           return sDate.getDay() === currentDayOfWeek && s.date !== todayStr
         })
-        
+
         if (sameDaySession) {
           try {
             const detail = await get(`/sessions/detail/${sameDaySession.id}`)
@@ -77,25 +77,22 @@ export default function Dashboard() {
   }
 
   const todayName = DAYS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1]
+  const dateLabel = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })
 
   return (
     <div className="space-y-6">
       {(missedPending.length > 0 || missedDone) && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-6">
-          <Card className="bg-gray-900 border-gray-700 w-full max-w-md">
-            <CardContent className="pt-6 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
+          <Card className="w-full max-w-md">
+            <CardContent className="space-y-4 pt-6">
               {!missedDone ? (
                 <>
-                  <img
-                    src={angryEmoji}
-                    alt=""
-                    className="w-20 h-20 mx-auto"
-                  />
-                  <h3 className="text-lg font-bold text-red-400 tracking-wide text-center">
+                  <img src={angryEmoji} alt="" className="mx-auto h-20 w-20" />
+                  <h3 className="text-center text-lg font-medium tracking-wide text-destructive">
                     WHY DID YOU MISS THE LAST SESSION
                   </h3>
                   {missedPending.length > 1 && (
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       You skipped {missedPending.length} scheduled sessions.
                     </p>
                   )}
@@ -104,14 +101,14 @@ export default function Dashboard() {
                     onChange={e => setMissedReason(e.target.value)}
                     rows={3}
                     placeholder="Your reason..."
-                    className="w-full bg-gray-800 border border-gray-700 rounded-md p-2 text-sm"
+                    className="w-full rounded-md border border-border bg-secondary p-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     autoFocus
                   />
                   <Button onClick={submitMissedReason} className="w-full">Submit</Button>
                 </>
               ) : (
                 <>
-                  <p className="text-lg font-bold text-center">Don't let that happen again</p>
+                  <p className="text-center text-lg font-medium">Don't let that happen again</p>
                   <Button onClick={() => setMissedDone(false)} className="w-full">Got it</Button>
                 </>
               )}
@@ -120,47 +117,104 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-medium">Dashboard</h2>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-medium">Ready to chadmaxx?</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {dateLabel}{todayPlan?.label ? ` · ${todayPlan.label}` : ''}
+          </p>
+        </div>
         <Button onClick={startSession}>Start session</Button>
       </div>
 
+      {/* Per-muscle volume tracker — the centerpiece. */}
+      <Card>
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0 pb-2">
+          <CardTitle className="text-lg">Volume by muscle</CardTitle>
+          <div className="flex gap-1">
+            {VOLUME_PERIODS.map(p => (
+              <button
+                key={p.key}
+                onClick={() => setVolumePeriod(p.key)}
+                className={`rounded-md px-2.5 py-1 text-xs transition-colors ${
+                  volumePeriod === p.key ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:bg-accent'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!volume && <p className="text-sm text-muted-foreground">Loading...</p>}
+          {volume && volume.muscles.length === 0 && (
+            <p className="text-sm text-muted-foreground">No sets logged in this period.</p>
+          )}
+          {volume && volume.muscles.length > 0 && (() => {
+            const max = Math.max(...volume.muscles.map(m => m.sets))
+            return (
+              <>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {volume.total_sets} total sets
+                </p>
+                <div className="space-y-3.5">
+                  {volume.muscles.map(m => (
+                    <div key={m.muscle}>
+                      <div className="mb-1.5 flex items-center justify-between text-sm">
+                        <span className="capitalize">{m.muscle}</span>
+                        <span className="tnum text-muted-foreground">{m.sets}</span>
+                      </div>
+                      <div className="h-2.5 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-primary"
+                          style={{ width: max ? `${(m.sets / max) * 100}%` : '0%' }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )
+          })()}
+        </CardContent>
+      </Card>
+
       {/* Today's workout plan */}
-      <Card className="bg-gray-900 border-gray-800">
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Today — {todayName}</CardTitle>
         </CardHeader>
         <CardContent>
           {!todayPlan && (
-            <p className="text-sm text-gray-500">No active program. Set one in My Workouts.</p>
+            <p className="text-sm text-muted-foreground">No active program. Set one in My Workouts.</p>
           )}
           {todayPlan?.is_rest && (
-            <p className="text-sm text-gray-400">Rest day. Recover well.</p>
+            <p className="text-sm text-muted-foreground">Rest day. Recover well.</p>
           )}
           {todayPlan && !todayPlan.is_rest && (
             <div className="space-y-2">
               {todayPlan.label && (
-                <p className="text-sm text-gray-400 mb-3">{todayPlan.label}</p>
+                <p className="mb-3 text-sm text-muted-foreground">{todayPlan.label}</p>
               )}
               {todayPlan.exercises.map((ex, i) => (
-                <div key={i} className="flex items-center justify-between px-3 py-2 bg-gray-800 rounded-lg">
+                <div key={i} className="flex items-center justify-between rounded-lg bg-secondary px-3 py-2">
                   <p className="text-sm">{ex.exercise.name}</p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     {ex.target_sets} sets · {ex.target_reps_min}–{ex.target_reps_max} reps
                   </p>
                 </div>
               ))}
-              
+
               {lastWeekSession && (
-                <div className="bg-gray-800/60 rounded-lg p-3 my-4 border border-gray-700/50">
-                  <p className="text-xs text-gray-400 font-medium mb-2 uppercase tracking-wide">Last time you did this ({lastWeekSession.date})</p>
+                <div className="my-4 rounded-lg border border-border bg-secondary/60 p-3">
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Last time you did this ({lastWeekSession.date})</p>
                   <div className="space-y-1.5">
                   {lastWeekSession.session_exercises?.map((se, idx) => {
                     const topWeight = se.sets.length > 0 ? Math.max(...se.sets.map(s => s.weight_kg || 0)) : 0
                     return (
                       <div key={idx} className="flex items-center justify-between text-xs">
-                        <span className="text-gray-300">{se.exercise.name}</span>
-                        <span className="text-gray-500">
+                        <span className="text-foreground">{se.exercise.name}</span>
+                        <span className="text-muted-foreground">
                           {se.sets.length} sets {topWeight > 0 ? ` (Top: ${topWeight}kg)` : ''}
                         </span>
                       </div>
@@ -169,8 +223,8 @@ export default function Dashboard() {
                   </div>
                 </div>
               )}
-              
-              <Button className="w-full mt-2" onClick={startSession}>
+
+              <Button className="mt-2 w-full" onClick={startSession}>
                 Start today's session
               </Button>
             </div>
@@ -180,75 +234,27 @@ export default function Dashboard() {
 
       {/* Recent sessions */}
       <div className="space-y-2">
-        <h3 className="text-sm text-gray-400">Recent sessions</h3>
-        {loading && <p className="text-sm text-gray-500">Loading...</p>}
+        <h3 className="text-sm text-muted-foreground">Recent sessions</h3>
+        {loading && <p className="text-sm text-muted-foreground">Loading...</p>}
         {!loading && sessions.length === 0 && (
-          <p className="text-sm text-gray-500">No sessions yet.</p>
+          <p className="text-sm text-muted-foreground">No sessions yet.</p>
         )}
         {sessions.slice(0, 10).map(s => (
           <div
             key={s.id}
             onClick={() => navigate(`/session/${s.id}`)}
-            className="flex items-center justify-between px-4 py-3 bg-gray-900 border border-gray-800 rounded-lg cursor-pointer hover:border-gray-600 transition-colors"
+            className="flex cursor-pointer items-center justify-between rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:border-primary/40"
           >
             <div>
               <p className="text-sm font-medium">{s.date}</p>
-              {s.notes && <p className="text-xs text-gray-500 mt-0.5">{s.notes}</p>}
+              {s.notes && <p className="mt-0.5 text-xs text-muted-foreground">{s.notes}</p>}
             </div>
             {s.session_rpe && (
-              <span className="text-xs text-gray-400">RPE {s.session_rpe}</span>
+              <span className="text-xs text-muted-foreground">RPE {s.session_rpe}</span>
             )}
           </div>
         ))}
       </div>
-
-      {/* Per-muscle volume tracker */}
-      <Card className="bg-gray-900 border-gray-800">
-        <CardHeader className="pb-2 flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
-          <CardTitle className="text-base">Volume by muscle</CardTitle>
-          <div className="flex gap-1">
-            {VOLUME_PERIODS.map(p => (
-              <button
-                key={p.key}
-                onClick={() => setVolumePeriod(p.key)}
-                className={`px-2.5 py-1 rounded-md text-xs transition-colors ${
-                  volumePeriod === p.key ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-800'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {!volume && <p className="text-sm text-gray-500">Loading...</p>}
-          {volume && volume.muscles.length === 0 && (
-            <p className="text-sm text-gray-500">No sets logged in this period.</p>
-          )}
-          {volume && volume.muscles.length > 0 && (() => {
-            const max = Math.max(...volume.muscles.map(m => m.sets))
-            return (
-              <>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">
-                  {volume.total_sets} total sets
-                </p>
-                {volume.muscles.map(m => (
-                  <div key={m.muscle} className="flex items-center gap-3">
-                    <span className="w-24 text-sm capitalize text-gray-300">{m.muscle}</span>
-                    <div className="flex-1 bg-gray-800 rounded h-5 overflow-hidden">
-                      <div
-                        className="bg-blue-500/70 h-full rounded"
-                        style={{ width: max ? `${(m.sets / max) * 100}%` : '0%' }}
-                      />
-                    </div>
-                    <span className="w-8 text-right text-sm text-gray-400">{m.sets}</span>
-                  </div>
-                ))}
-              </>
-            )
-          })()}
-        </CardContent>
-      </Card>
     </div>
   )
 }

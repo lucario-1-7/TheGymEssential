@@ -67,7 +67,7 @@ export default function Exercises() {
       </div>
 
       {showForm && (
-        <Card className="bg-gray-900 border-gray-800">
+        <Card>
           <CardHeader>
             <CardTitle className="text-base">New exercise</CardTitle>
           </CardHeader>
@@ -76,33 +76,33 @@ export default function Exercises() {
               placeholder="Exercise name"
               value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-              className="bg-gray-800 border-gray-700"
+              className="bg-secondary border-border"
             />
 
             <div className="flex gap-4">
               <div className="flex-1">
-                <label className="text-xs text-gray-400 mb-1 block">Movement</label>
+                <label className="text-xs text-muted-foreground mb-1 block">Movement</label>
                 <select
                   value={form.movement_pattern}
                   onChange={e => setForm(f => ({ ...f, movement_pattern: e.target.value }))}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm"
+                  className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"
                 >
                   {MOVEMENT_PATTERNS.map(p => <option key={p}>{p}</option>)}
                 </select>
               </div>
               <div className="flex-1">
-                <label className="text-xs text-gray-400 mb-1 block">Equipment</label>
+                <label className="text-xs text-muted-foreground mb-1 block">Equipment</label>
                 <select
                   value={form.equipment}
                   onChange={e => setForm(f => ({ ...f, equipment: e.target.value }))}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm"
+                  className="w-full bg-secondary border border-border rounded-md px-3 py-2 text-sm"
                 >
                   {EQUIPMENT.map(e => <option key={e}>{e}</option>)}
                 </select>
               </div>
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
               <input
                 type="checkbox"
                 checked={form.is_unilateral}
@@ -112,8 +112,8 @@ export default function Exercises() {
             </label>
 
             <div>
-              <label className="text-xs text-gray-400 mb-2 block">
-                Muscles — click once for primary, twice for secondary, again to remove
+              <label className="text-xs text-muted-foreground mb-2 block">
+                Muscles (click once for primary, twice for secondary, again to remove)
               </label>
               <div className="flex flex-wrap gap-2">
                 {muscleGroups.map(mg => {
@@ -124,10 +124,10 @@ export default function Exercises() {
                       onClick={() => toggleMuscle(mg.id)}
                       className={`px-3 py-1 rounded-full text-xs border transition-colors ${
                         selected?.is_primary
-                          ? 'bg-white text-gray-900 border-white'
+                          ? 'bg-primary text-primary-foreground border-primary'
                           : selected
-                          ? 'bg-gray-700 text-white border-gray-600'
-                          : 'bg-transparent text-gray-400 border-gray-700 hover:border-gray-500'
+                          ? 'bg-muted text-foreground border-border'
+                          : 'bg-transparent text-muted-foreground border-border hover:border-primary/40'
                       }`}
                     >
                       {mg.name} {selected?.is_primary ? '(primary)' : selected ? '(secondary)' : ''}
@@ -146,11 +146,11 @@ export default function Exercises() {
         {exercises.map(ex => (
           <div
             key={ex.id}
-            className="flex items-center justify-between px-4 py-3 bg-gray-900 border border-gray-800 rounded-lg"
+            className="flex items-center justify-between px-4 py-3 bg-card border border-border rounded-lg"
           >
             <div>
               <p className="text-sm font-medium">{ex.name}</p>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {ex.movement_pattern} · {ex.equipment}
                 {ex.is_unilateral ? ' · unilateral' : ''}
                 {' · '}
@@ -163,7 +163,7 @@ export default function Exercises() {
             <Button
               variant="ghost"
               size="sm"
-              className="text-gray-500 hover:text-red-400"
+              className="text-muted-foreground hover:text-red-400"
               onClick={() => handleDelete(ex.id)}
             >
               Delete
@@ -171,7 +171,7 @@ export default function Exercises() {
           </div>
         ))}
         {exercises.length === 0 && (
-          <p className="text-sm text-gray-500">No exercises yet. Add one above.</p>
+          <p className="text-sm text-muted-foreground">No exercises yet. Add one above.</p>
         )}
       </div>
     </div>

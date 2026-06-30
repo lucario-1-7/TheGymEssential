@@ -84,7 +84,7 @@ export default function Session() {
   }
 
   async function logSet(sessionExerciseId, exerciseId, setData) {
-    // Best weight before this set — used to detect a new PR.
+    // Best weight before this set, used to detect a new PR.
     const prevPr = suggestion[exerciseId]?.pr?.weight_kg ?? null
     const newSet = await post(`/sessions/exercises/${sessionExerciseId}/sets`, setData)
     setSession(prev => ({
@@ -115,15 +115,15 @@ export default function Session() {
     }))
   }
 
-  if (!session) return <p className="text-sm text-gray-500">Loading...</p>
+  if (!session) return <p className="text-sm text-muted-foreground">Loading...</p>
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-medium">Session — {session.date}</h2>
+          <h2 className="text-xl font-medium">Session, {session.date}</h2>
           {session.session_exercises?.length > 0 && (
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {session.session_exercises.length} exercises
             </p>
           )}
@@ -134,13 +134,13 @@ export default function Session() {
       </div>
 
       {showExercisePicker && (
-        <Card className="bg-gray-900 border-gray-800">
+        <Card>
           <CardContent className="pt-4 space-y-2">
             <Input
               placeholder="Search exercises..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="bg-gray-800 border-gray-700"
+              className="bg-secondary border-border"
               autoFocus
             />
             <div className="space-y-1 max-h-48 overflow-y-auto">
@@ -148,16 +148,16 @@ export default function Session() {
                 <button
                   key={ex.id}
                   onClick={() => addExercise(ex.id)}
-                  className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-gray-800 transition-colors"
+                  className="w-full text-left px-3 py-2 text-sm rounded-md hover:bg-secondary transition-colors"
                 >
                   <span className="font-medium">{ex.name}</span>
-                  <span className="text-gray-500 ml-2 text-xs">
+                  <span className="text-muted-foreground ml-2 text-xs">
                     {ex.muscle_targets.filter(m => m.is_primary).map(m => m.muscle_group.name).join(', ')}
                   </span>
                 </button>
               ))}
               {filtered.length === 0 && (
-                <p className="text-xs text-gray-500 px-3 py-2">No exercises found</p>
+                <p className="text-xs text-muted-foreground px-3 py-2">No exercises found</p>
               )}
             </div>
           </CardContent>
@@ -222,7 +222,7 @@ function ExerciseBlock({ se, suggestion, onLogSet, onDeleteSet }) {
       notes: form.notes || null,
     }
     if (isUnilateral) {
-      // One left row and one right row, same set_number — enables asymmetry tracking.
+      // One left row and one right row, same set_number, enables asymmetry tracking.
       await onLogSet({ ...base, weight_kg: parseFloat(form.weight_kg_left) || null, side: 'left' })
       await onLogSet({ ...base, weight_kg: parseFloat(form.weight_kg_right) || null, side: 'right' })
     } else {
@@ -247,39 +247,39 @@ function ExerciseBlock({ se, suggestion, onLogSet, onDeleteSet }) {
     else if (diff > 0) setStatus = { text: `${setsDone}/${se.target_sets} sets · +${diff} extra`, cls: 'text-amber-400' }
     else setStatus = { text: `${setsDone}/${se.target_sets} sets · ${-diff} short`, cls: 'text-orange-400' }
   } else {
-    setStatus = { text: `${setsDone} set${setsDone === 1 ? '' : 's'}`, cls: 'text-gray-500' }
+    setStatus = { text: `${setsDone} set${setsDone === 1 ? '' : 's'}`, cls: 'text-muted-foreground' }
   }
 
   return (
-    <Card className="bg-gray-900 border-gray-800">
+    <Card>
       <CardHeader className="pb-2">
         <CardTitle className="text-base">{se.exercise.name}</CardTitle>
         <div className="flex gap-3 mt-0.5 flex-wrap items-center">
           <p className={`text-xs font-medium ${setStatus.cls}`}>{setStatus.text}</p>
-          {repTarget && <p className="text-xs text-gray-500">{repTarget}</p>}
-          {suggestion && <p className="text-xs text-blue-400">{suggestion.reason}</p>}
+          {repTarget && <p className="text-xs text-muted-foreground">{repTarget}</p>}
+          {suggestion && <p className="text-xs text-primary">{suggestion.reason}</p>}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {se.sets?.length > 0 && (
           <div className="space-y-1">
             {se.sets.map(s => (
-              <div key={s.id} className="flex items-center justify-between text-sm px-2 py-1.5 bg-gray-800 rounded">
-                <span className="text-gray-400 w-12">
+              <div key={s.id} className="flex items-center justify-between text-sm px-2 py-1.5 bg-secondary rounded">
+                <span className="text-muted-foreground w-12">
                   Set {s.set_number}{s.is_warmup ? ' ·W' : ''}
                 </span>
                 <div className="flex-1 text-center">
                   <div>
                     {s.side !== 'both' && (
-                      <span className="text-gray-500 mr-1">{s.side === 'left' ? 'L' : 'R'}</span>
+                      <span className="text-muted-foreground mr-1">{s.side === 'left' ? 'L' : 'R'}</span>
                     )}
                     {s.weight_kg}kg × {s.reps} @ RIR {s.rir}
                   </div>
-                  {s.notes && <div className="text-[10px] text-gray-500 italic mt-0.5">"{s.notes}"</div>}
+                  {s.notes && <div className="text-[10px] text-muted-foreground italic mt-0.5">"{s.notes}"</div>}
                 </div>
                 <button
                   onClick={() => onDeleteSet(s.id)}
-                  className="text-gray-600 hover:text-red-400 text-xs"
+                  className="text-muted-foreground hover:text-red-400 text-xs"
                 >
                   ✕
                 </button>
@@ -293,7 +293,7 @@ function ExerciseBlock({ se, suggestion, onLogSet, onDeleteSet }) {
             <div className={`rounded-md px-3 py-2 text-sm font-medium border ${
               suggestion.double_progression.level === 'add'
                 ? 'bg-green-950/20 border-green-900/40 text-green-400'
-                : 'bg-blue-950/20 border-blue-900/40 text-blue-300'
+                : 'bg-primary/10 border-primary/40 text-primary'
             }`}>
               {suggestion.double_progression.message}
             </div>
@@ -303,14 +303,14 @@ function ExerciseBlock({ se, suggestion, onLogSet, onDeleteSet }) {
               {suggestion.pr && (
                 <div className="bg-yellow-950/10 p-2 rounded border border-yellow-900/30">
                   <p className="text-yellow-500 font-medium mb-1 flex items-center gap-1">PR</p>
-                  <p className="text-gray-300 font-medium">{suggestion.pr.weight_kg}kg × {suggestion.pr.reps}</p>
-                  <p className="text-gray-500 text-[10px] mt-0.5">{suggestion.pr.date}</p>
+                  <p className="text-foreground font-medium">{suggestion.pr.weight_kg}kg × {suggestion.pr.reps}</p>
+                  <p className="text-muted-foreground text-[10px] mt-0.5">{suggestion.pr.date}</p>
                 </div>
               )}
               {suggestion.last_session && (
-                <div className="bg-blue-950/10 p-2 rounded border border-blue-900/30">
-                  <p className="text-blue-400 font-medium mb-1 flex items-center gap-1">Last time</p>
-                  <div className="space-y-0.5 text-gray-300">
+                <div className="bg-primary/10 p-2 rounded border border-primary/30">
+                  <p className="text-primary font-medium mb-1 flex items-center gap-1">Last time</p>
+                  <div className="space-y-0.5 text-foreground">
                     {suggestion.last_session.sets.map(s => (
                       <p key={s.id}>
                         {s.side !== 'both' ? `${s.side === 'left' ? 'L' : 'R'} ` : ''}
@@ -318,13 +318,13 @@ function ExerciseBlock({ se, suggestion, onLogSet, onDeleteSet }) {
                       </p>
                     ))}
                   </div>
-                  <p className="text-gray-500 text-[10px] mt-0.5">{suggestion.last_session.date}</p>
+                  <p className="text-muted-foreground text-[10px] mt-0.5">{suggestion.last_session.date}</p>
                 </div>
               )}
             </div>
           )}
 
-          <p className="text-xs text-gray-400">Log set {nextSetNumber}</p>
+          <p className="text-xs text-muted-foreground">Log set {nextSetNumber}</p>
           <div className="flex gap-2 flex-wrap">
             {isUnilateral ? (
               <>
@@ -332,13 +332,13 @@ function ExerciseBlock({ se, suggestion, onLogSet, onDeleteSet }) {
                   placeholder="Left kg"
                   value={form.weight_kg_left}
                   onChange={e => setForm(f => ({ ...f, weight_kg_left: e.target.value }))}
-                  className="bg-gray-800 border-gray-700 w-24"
+                  className="bg-secondary border-border w-24"
                 />
                 <Input
                   placeholder="Right kg"
                   value={form.weight_kg_right}
                   onChange={e => setForm(f => ({ ...f, weight_kg_right: e.target.value }))}
-                  className="bg-gray-800 border-gray-700 w-24"
+                  className="bg-secondary border-border w-24"
                 />
               </>
             ) : (
@@ -346,28 +346,28 @@ function ExerciseBlock({ se, suggestion, onLogSet, onDeleteSet }) {
                 placeholder="Weight kg"
                 value={form.weight_kg}
                 onChange={e => setForm(f => ({ ...f, weight_kg: e.target.value }))}
-                className="bg-gray-800 border-gray-700 w-28"
+                className="bg-secondary border-border w-28"
               />
             )}
             <Input
               placeholder="Reps"
               value={form.reps}
               onChange={e => setForm(f => ({ ...f, reps: e.target.value }))}
-              className="bg-gray-800 border-gray-700 w-20"
+              className="bg-secondary border-border w-20"
             />
             <Input
               placeholder="RIR"
               value={form.rir}
               onChange={e => setForm(f => ({ ...f, rir: e.target.value }))}
-              className="bg-gray-800 border-gray-700 w-16"
+              className="bg-secondary border-border w-16"
             />
             <Input
               placeholder="Comments (optional)"
               value={form.notes}
               onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-              className="bg-gray-800 border-gray-700 flex-1 min-w-[140px]"
+              className="bg-secondary border-border flex-1 min-w-[140px]"
             />
-            <label className="flex items-center gap-1 text-xs text-gray-400 select-none">
+            <label className="flex items-center gap-1 text-xs text-muted-foreground select-none">
               <input
                 type="checkbox"
                 checked={form.is_warmup}

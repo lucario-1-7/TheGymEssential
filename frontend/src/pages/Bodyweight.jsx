@@ -42,46 +42,46 @@ export default function Bodyweight() {
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-medium">Bodyweight</h2>
-      <p className="text-sm text-gray-400">Try logging your weight first thing in the morning!</p>
+      <p className="text-sm text-muted-foreground">Try logging your weight first thing in the morning!</p>
 
-      <Card className="bg-gray-900 border-gray-800">
+      <Card>
         <CardContent className="pt-4 flex flex-wrap items-end gap-3">
           <div>
-            <label className="text-xs text-gray-500 block mb-1">Date</label>
+            <label className="text-xs text-muted-foreground block mb-1">Date</label>
             <Input
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
-              className="bg-gray-800 border-gray-700 w-40"
+              className="bg-secondary border-border w-40"
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 block mb-1">Weight (kg)</label>
+            <label className="text-xs text-muted-foreground block mb-1">Weight (kg)</label>
             <Input
               placeholder="e.g. 80.5"
               value={weight}
               onChange={e => setWeight(e.target.value)}
-              className="bg-gray-800 border-gray-700 w-32"
+              className="bg-secondary border-border w-32"
             />
           </div>
           <Button onClick={logWeight}>Log</Button>
           {latest && (
-            <span className="text-xs text-gray-500 ml-auto">
+            <span className="text-xs text-muted-foreground ml-auto">
               Latest: {latest.weight_kg}kg on {latest.date}
             </span>
           )}
         </CardContent>
       </Card>
 
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <Card className="bg-gray-900 border-gray-800">
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Trend</CardTitle>
         </CardHeader>
         <CardContent>
           {logs.length === 0
-            ? <p className="text-sm text-gray-500">No bodyweight logged yet. Add your first entry above.</p>
+            ? <p className="text-sm text-muted-foreground">No bodyweight logged yet. Add your first entry above.</p>
             : <TrendChart data={logs} yKey="weight_kg" color="#a78bfa" unit="kg" />}
         </CardContent>
       </Card>
