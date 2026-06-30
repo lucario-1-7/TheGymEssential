@@ -49,12 +49,16 @@ see just its own backup folder and nothing else in your Drive. To enable it:
 3. Create an OAuth client ID of type Web application, with `http://localhost:5173` as an authorized JavaScript origin.
 4. Copy `frontend/.env.example` to `frontend/.env` and set `VITE_GOOGLE_CLIENT_ID` to your client ID.
 
-The browser and PWA path is wired up. Native Google sign-in for the Android build is
-not connected yet.
+Sign-in works on the web/PWA (Google Identity Services) and inside the Android build,
+where OAuth runs in the system browser with PKCE. The Android build authenticates
+against an iOS-type OAuth client (the only client type whose custom-scheme redirect
+works from a browser flow); set its client id as `VITE_GOOGLE_ANDROID_CLIENT_ID`.
 
 ## Android (Capacitor)
 
 The Android build targets Capacitor 8 and compiles against JDK 21.
+
+Debug build (local testing):
 
 ```bash
 cd frontend
@@ -63,4 +67,16 @@ npx cap sync android
 cd android && ./gradlew assembleDebug   # with JDK 21 on JAVA_HOME
 ```
 
-The resulting APK is at `frontend/android/app/build/outputs/apk/debug/app-debug.apk`.
+The APK is at `frontend/android/app/build/outputs/apk/debug/app-debug.apk`.
+
+Release build (signed, shareable):
+
+1. Create a keystore once and keep it private and backed up (never commit it):
+   `keytool -genkeypair -v -keystore thegymessential-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias thegym`
+2. Create `frontend/android/keystore.properties` (gitignored) with `storeFile`, `storePassword`, `keyAlias`, and `keyPassword`.
+3. Build: `npm run build`, then `npx cap sync android`, then `cd android && ./gradlew assembleRelease` with JDK 21. The signed APK is under `app/build/outputs/apk/release/`.
+
+The signing certificate is not tied to Google sign-in (the Android build uses an
+iOS-type OAuth client), so there is no SHA-1 to register. For other people to sign in,
+add them as test users on the OAuth consent screen, or publish the consent screen and
+complete Google verification (the `drive.appdata` scope is sensitive).
