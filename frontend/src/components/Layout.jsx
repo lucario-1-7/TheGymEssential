@@ -9,6 +9,7 @@ const links = [
   { to: '/bodyweight',  label: 'Bodyweight'     },
   { to: '/outlines',    label: 'Workout Outlines' },
   { to: '/exercises',   label: 'Exercises'      },
+  { to: '/backup',      label: 'Backup'         },
 ]
 
 const linkClass = ({ isActive }) =>

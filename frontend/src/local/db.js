@@ -53,6 +53,18 @@ export async function ensureSeeded() {
   })
 }
 
+// True if the user has logged anything worth backing up. Ignores the static seed
+// (muscleGroups/exercises/exerciseMuscles), which exists on every install. Used to
+// stop a just-installed empty DB from overwriting a good cloud backup.
+export async function hasUserData() {
+  const counts = await Promise.all([
+    db.sessions.count(),
+    db.programs.count(),
+    db.bodyweightLogs.count(),
+  ])
+  return counts.some(n => n > 0)
+}
+
 // Wipe all user data (keeps nothing). Used by restore-from-backup before import.
 export async function clearAllData() {
   await db.transaction('rw', db.tables, async () => {

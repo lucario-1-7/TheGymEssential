@@ -8,11 +8,15 @@ import Progress from './pages/Progress'
 import Bodyweight from './pages/Bodyweight'
 import History from './pages/History'
 import Outlines from './pages/Outlines'
+import Backup from './pages/Backup'
+import Onboarding from './components/Onboarding'
 
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Layout />}>
+    <>
+      <Onboarding />
+      <Routes>
+        <Route path="/" element={<Layout />}>
         <Route index element={<Dashboard />} />
         <Route path="exercises" element={<Exercises />} />
         <Route path="session/:sessionId" element={<Session />} />
@@ -21,8 +25,10 @@ function App() {
         <Route path="bodyweight" element={<Bodyweight />} />
         <Route path="history" element={<History />} />
         <Route path="outlines" element={<Outlines />} />
-      </Route>
-    </Routes>
+        <Route path="backup" element={<Backup />} />
+        </Route>
+      </Routes>
+    </>
   )
 }
 
