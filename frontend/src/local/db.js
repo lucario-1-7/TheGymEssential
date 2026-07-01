@@ -22,19 +22,31 @@ db.version(1).stores({
 
 export const uuid = () => crypto.randomUUID()
 
-// Seed the static catalog once. Idempotent: skips if exercises already exist.
+// Seed / top up the static catalog. Additive and idempotent: adds any muscle groups
+// or exercises (matched by name) that aren't already present, and leaves user data
+// and custom entries untouched. Runs on every launch, so new catalog entries reach
+// existing installs and survive a restore from an older backup.
 export async function ensureSeeded() {
-  const count = await db.exercises.count()
-  if (count > 0) return
-
+  // Muscle groups: add any missing by name.
   const mgByName = {}
-  await db.transaction('rw', db.muscleGroups, db.exercises, db.exerciseMuscles, async () => {
-    for (const name of MUSCLE_GROUPS) {
-      const id = uuid()
-      mgByName[name] = id
-      await db.muscleGroups.add({ id, name })
-    }
-    for (const e of EXERCISES) {
+  for (const m of await db.muscleGroups.toArray()) mgByName[m.name] = m.id
+  const missingMg = MUSCLE_GROUPS.filter(name => !mgByName[name])
+  if (missingMg.length) {
+    await db.transaction('rw', db.muscleGroups, async () => {
+      for (const name of missingMg) {
+        const id = uuid()
+        mgByName[name] = id
+        await db.muscleGroups.add({ id, name })
+      }
+    })
+  }
+
+  // Exercises: add any missing by name (case-insensitive), with their muscle targets.
+  const have = new Set((await db.exercises.toArray()).map(e => e.name.toLowerCase()))
+  const toAdd = EXERCISES.filter(e => !have.has(e.name.toLowerCase()))
+  if (!toAdd.length) return
+  await db.transaction('rw', db.exercises, db.exerciseMuscles, async () => {
+    for (const e of toAdd) {
       const exId = uuid()
       await db.exercises.add({
         id: exId,
@@ -44,10 +56,10 @@ export async function ensureSeeded() {
         is_unilateral: e.is_unilateral,
       })
       for (const m of e.primary) {
-        await db.exerciseMuscles.add({ id: uuid(), exercise_id: exId, muscle_group_id: mgByName[m], is_primary: true })
+        if (mgByName[m]) await db.exerciseMuscles.add({ id: uuid(), exercise_id: exId, muscle_group_id: mgByName[m], is_primary: true })
       }
       for (const m of e.secondary) {
-        await db.exerciseMuscles.add({ id: uuid(), exercise_id: exId, muscle_group_id: mgByName[m], is_primary: false })
+        if (mgByName[m]) await db.exerciseMuscles.add({ id: uuid(), exercise_id: exId, muscle_group_id: mgByName[m], is_primary: false })
       }
     }
   })

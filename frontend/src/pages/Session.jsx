@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import Popup from '../components/Popup'
+import { tapLight, celebrate } from '../lib/haptics'
 import excitedHappy from '../assets/excited-happy.png'
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -96,8 +97,12 @@ export default function Session() {
       ),
     }))
     // Celebrate a new weight PR: a working set heavier than the previous best.
-    if (!setData.is_warmup && setData.weight_kg != null && (prevPr == null || setData.weight_kg > prevPr)) {
+    const isPr = !setData.is_warmup && setData.weight_kg != null && (prevPr == null || setData.weight_kg > prevPr)
+    if (isPr) {
       setShowPr(true)
+      celebrate()       // strong congratulatory buzz
+    } else {
+      tapLight()        // gentle tap on a normal set
     }
     const sg = await get(`/sessions/${USER_ID}/suggestions/${exerciseId}`)
     setSuggestion(prev => ({ ...prev, [exerciseId]: sg }))
@@ -177,8 +182,10 @@ export default function Session() {
       </div>
 
       <Popup show={showPr} onClose={() => setShowPr(false)}>
-        <img src={excitedHappy} alt="" className="w-12 h-12" />
-        <p className="text-sm font-bold text-yellow-300">You hit your PR! Well done bro!</p>
+        <div className="flex flex-col items-center gap-3 text-center">
+          <img src={excitedHappy} alt="" className="h-24 w-24" />
+          <p className="text-base font-bold text-yellow-300">You hit your PR! Well done bro!</p>
+        </div>
       </Popup>
     </div>
   )
@@ -213,11 +220,11 @@ function ExerciseBlock({ se, suggestion, onLogSet, onDeleteSet }) {
   }, [suggestion])
 
   async function handleLog() {
-    if (!form.reps || form.rir === '') return
+    if (!form.reps) return
     const base = {
       set_number: nextSetNumber,
       reps: parseInt(form.reps),
-      rir: parseInt(form.rir),
+      rir: form.rir === '' ? null : parseInt(form.rir),
       is_warmup: form.is_warmup,
       notes: form.notes || null,
     }
@@ -273,7 +280,7 @@ function ExerciseBlock({ se, suggestion, onLogSet, onDeleteSet }) {
                     {s.side !== 'both' && (
                       <span className="text-muted-foreground mr-1">{s.side === 'left' ? 'L' : 'R'}</span>
                     )}
-                    {s.weight_kg}kg × {s.reps} @ RIR {s.rir}
+                    {s.weight_kg}kg × {s.reps}{s.rir != null ? ` @ RIR ${s.rir}` : ''}
                   </div>
                   {s.notes && <div className="text-[10px] text-muted-foreground italic mt-0.5">"{s.notes}"</div>}
                 </div>
@@ -356,10 +363,10 @@ function ExerciseBlock({ se, suggestion, onLogSet, onDeleteSet }) {
               className="bg-secondary border-border w-20"
             />
             <Input
-              placeholder="RIR"
+              placeholder="RIR (opt)"
               value={form.rir}
               onChange={e => setForm(f => ({ ...f, rir: e.target.value }))}
-              className="bg-secondary border-border w-16"
+              className="bg-secondary border-border w-20"
             />
             <Input
               placeholder="Comments (optional)"

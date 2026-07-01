@@ -25,6 +25,8 @@ export default function Dashboard() {
   const [missedDone, setMissedDone] = useState(false)
   const [volume, setVolume] = useState(null)
   const [volumePeriod, setVolumePeriod] = useState('week')
+  const [activeProgram, setActiveProgram] = useState(null)
+  const [showDayPicker, setShowDayPicker] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -54,6 +56,11 @@ export default function Dashboard() {
       .then(data => setTodayPlan(data))
       .catch(() => setTodayPlan(null))
 
+    // Active program's days, for the "doing a different workout?" picker.
+    get(`/programs/${USER_ID}`)
+      .then(ps => setActiveProgram(Array.isArray(ps) ? ps.find(p => p.is_active) || null : null))
+      .catch(() => setActiveProgram(null))
+
     // Detect skipped scheduled sessions since the last time you trained.
     post(`/missed/${USER_ID}/scan`).then(setMissedPending).catch(() => {})
   }, [])
@@ -70,6 +77,23 @@ export default function Dashboard() {
     navigate(`/session/${session.id}`)
   }
 
+  // Start today's session but populated from a chosen program day (not today's).
+  // Pre-filling the exercises means the Session screen skips its auto-populate.
+  async function startSessionWithDay(day) {
+    const today = new Date().toISOString().split('T')[0]
+    const session = await post(`/sessions/${USER_ID}`, { date: today })
+    for (const [i, ex] of day.exercises.entries()) {
+      await post(`/sessions/detail/${session.id}/exercises`, {
+        exercise_id: ex.exercise.id,
+        order_index: i,
+        target_sets: ex.target_sets,
+        target_reps_min: ex.target_reps_min,
+        target_reps_max: ex.target_reps_max,
+      })
+    }
+    navigate(`/session/${session.id}`)
+  }
+
   async function submitMissedReason() {
     if (!missedReason.trim()) return
     await post(`/missed/${USER_ID}/answer`, { reason: missedReason.trim() })
@@ -79,6 +103,7 @@ export default function Dashboard() {
 
   const todayName = DAYS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1]
   const dateLabel = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })
+  const trainingDays = activeProgram?.days?.filter(d => !d.is_rest && d.exercises?.length) || []
 
   return (
     <div className="space-y-6">
@@ -230,6 +255,31 @@ export default function Dashboard() {
               <Button className="mt-2 w-full" onClick={startSession}>
                 Start today's session
               </Button>
+            </div>
+          )}
+
+          {trainingDays.length > 0 && (
+            <div className="mt-4 border-t border-border pt-3">
+              <button
+                onClick={() => setShowDayPicker(s => !s)}
+                className="text-xs text-primary hover:underline"
+              >
+                Doing a different workout?
+              </button>
+              {showDayPicker && (
+                <div className="mt-2 space-y-1">
+                  {trainingDays.map(d => (
+                    <button
+                      key={d.id}
+                      onClick={() => startSessionWithDay(d)}
+                      className="flex w-full items-center justify-between rounded-lg bg-secondary px-3 py-2 text-sm transition-colors hover:bg-muted"
+                    >
+                      <span>{d.label || DAYS[d.day_of_week]}</span>
+                      <span className="text-xs text-muted-foreground">{d.exercises.length} exercises</span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </CardContent>

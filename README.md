@@ -8,7 +8,7 @@ it up to your own Google Drive.
 ## Features
 
 - **Session logging** with planned-vs-actual sets, warm-up and unilateral (left/right) tracking, and RIR/RPE.
-- **Workout programs and outlines** with a weekly schedule and per-exercise targets.
+- **Workout programs** with a weekly schedule and per-exercise targets.
 - **Last-time reference** on the dashboard so you know what to beat this session.
 - **Progress charts** per exercise (estimated 1RM and more) with plateau detection, powered by Recharts.
 - **Per-muscle volume tracker** for the week or all time.
@@ -39,6 +39,11 @@ npm run dev      # start the dev server at http://localhost:5173
 npm run build    # production build into dist/
 ```
 
+Cloning this repo and running the steps above gives you the **web app**, not the
+Android app. The native Android project (`frontend/android/`) is intentionally not
+committed, so a fresh clone has nothing native to build until you add the platform
+yourself (see the Android section below).
+
 ### Google Drive backup (optional)
 
 Backup uses an in-app Google sign-in scoped to `drive.appdata` only, so the app can
@@ -56,7 +61,19 @@ works from a browser flow); set its client id as `VITE_GOOGLE_ANDROID_CLIENT_ID`
 
 ## Android (Capacitor)
 
-The Android build targets Capacitor 8 and compiles against JDK 21.
+The Android build targets Capacitor 8 and compiles against JDK 21. The `android/`
+project is not committed, so on a fresh clone you create it once:
+
+```bash
+cd frontend
+npm install
+npx cap add android
+```
+
+After adding the platform, add the Google OAuth redirect intent-filter to
+`android/app/src/main/AndroidManifest.xml`: a VIEW/BROWSABLE intent-filter on
+`MainActivity` with `<data android:scheme="com.googleusercontent.apps.YOUR_IOS_CLIENT_ID" />`,
+so sign-in can return to the app.
 
 Debug build (local testing):
 
@@ -78,5 +95,6 @@ Release build (signed, shareable):
 
 The signing certificate is not tied to Google sign-in (the Android build uses an
 iOS-type OAuth client), so there is no SHA-1 to register. For other people to sign in,
-add them as test users on the OAuth consent screen, or publish the consent screen and
-complete Google verification (the `drive.appdata` scope is sensitive).
+either add them as test users while the OAuth consent screen is in Testing mode, or
+publish the consent screen to production. Because `drive.appdata` is a non-sensitive
+scope, publishing does not require Google's verification review.

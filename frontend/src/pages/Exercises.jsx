@@ -7,10 +7,33 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 const MOVEMENT_PATTERNS = ['push', 'pull', 'hinge', 'squat', 'carry']
 const EQUIPMENT = ['barbell', 'dumbbell', 'cable', 'machine', 'bodyweight']
 
+// Quick filters shown as chips above the list, alongside every muscle group.
+const CATEGORIES = ['push', 'pull', 'upper', 'legs', 'hinge']
+const LEG_MUSCLES = new Set(['quads', 'hamstrings', 'glutes', 'calves', 'adductor', 'abductor'])
+const UPPER_MUSCLES = new Set(['chest', 'lats', 'traps', 'front delt', 'side delt', 'rear delt', 'biceps', 'triceps'])
+
+// True if an exercise matches the active filter (a category or a muscle-group name).
+function matchesFilter(ex, filter) {
+  if (filter === 'all') return true
+  if (filter === 'push' || filter === 'pull' || filter === 'hinge') return ex.movement_pattern === filter
+  if (filter === 'legs') return ex.muscle_targets.some(m => m.is_primary && LEG_MUSCLES.has(m.muscle_group?.name))
+  if (filter === 'upper') return ex.muscle_targets.some(m => m.is_primary && UPPER_MUSCLES.has(m.muscle_group?.name))
+  // Otherwise it's a muscle-group name: match any target (primary or secondary).
+  return ex.muscle_targets.some(m => m.muscle_group?.name === filter)
+}
+
+const chipClass = (active) =>
+  `rounded-full border px-3 py-1 text-xs capitalize transition-colors ${
+    active
+      ? 'border-primary bg-primary text-primary-foreground'
+      : 'border-border bg-transparent text-muted-foreground hover:border-primary/40'
+  }`
+
 export default function Exercises() {
   const [exercises, setExercises] = useState([])
   const [muscleGroups, setMuscleGroups] = useState([])
   const [showForm, setShowForm] = useState(false)
+  const [filter, setFilter] = useState('all')
   const [form, setForm] = useState({
     name: '',
     movement_pattern: 'push',
@@ -142,8 +165,18 @@ export default function Exercises() {
         </Card>
       )}
 
+      <div className="flex flex-wrap gap-2">
+        <button className={chipClass(filter === 'all')} onClick={() => setFilter('all')}>all</button>
+        {CATEGORIES.map(c => (
+          <button key={c} className={chipClass(filter === c)} onClick={() => setFilter(c)}>{c}</button>
+        ))}
+        {muscleGroups.map(mg => (
+          <button key={mg.id} className={chipClass(filter === mg.name)} onClick={() => setFilter(mg.name)}>{mg.name}</button>
+        ))}
+      </div>
+
       <div className="space-y-2">
-        {exercises.map(ex => (
+        {exercises.filter(ex => matchesFilter(ex, filter)).map(ex => (
           <div
             key={ex.id}
             className="flex items-center justify-between px-4 py-3 bg-card border border-border rounded-lg"
@@ -170,8 +203,10 @@ export default function Exercises() {
             </Button>
           </div>
         ))}
-        {exercises.length === 0 && (
+        {exercises.length === 0 ? (
           <p className="text-sm text-muted-foreground">No exercises yet. Add one above.</p>
+        ) : exercises.filter(ex => matchesFilter(ex, filter)).length === 0 && (
+          <p className="text-sm text-muted-foreground">No exercises match this filter.</p>
         )}
       </div>
     </div>

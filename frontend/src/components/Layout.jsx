@@ -62,8 +62,12 @@ export default function Layout() {
         ))}
       </aside>
 
-      {/* Mobile top bar */}
-      <header className="flex items-center gap-2 border-b border-border px-4 py-3 md:hidden">
+      {/* Mobile top bar. Extra top padding clears the status bar if the webview
+          ever draws edge-to-edge (env() is 0 when it does not). */}
+      <header
+        className="flex items-center gap-2 border-b border-border px-4 py-3 md:hidden"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
+      >
         <Logo className="h-7 w-7" />
         <span className="text-base font-medium">TheGymEssential</span>
       </header>

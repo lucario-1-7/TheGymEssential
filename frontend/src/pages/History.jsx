@@ -164,7 +164,7 @@ function SessionDetail({ detail, bare = false }) {
                 <div key={s.id} className="text-xs text-muted-foreground">
                   Set {s.set_number}{s.is_warmup ? ' ·W' : ''} (
                   {s.side !== 'both' ? `${s.side === 'left' ? 'L ' : 'R '}` : ''}
-                  {s.weight_kg ?? 0}kg × {s.reps} @ RIR {s.rir})
+                  {s.weight_kg ?? 0}kg × {s.reps}{s.rir != null ? ` @ RIR ${s.rir}` : ''})
                 </div>
               ))}
               {se.sets.length === 0 && <div className="text-xs text-muted-foreground">no sets</div>}
